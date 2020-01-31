@@ -1,0 +1,247 @@
+---
+title       : Tidy Data
+description : Look into tidy data properties on data sets used in articles from fivethirtyeight.com in the fivethirtyeight R package
+
+--- type:NormalExercise lang:r xp:100 skills:1 key:fa48676309
+## Joining data frames
+
+Recall the `police_locals` data frame you worked with in **Applying R Basics** as an interactive table [here](https://ismayc.github.io/Effective-Data-Storytelling-using-the-tidyverse/police_locals.html).  
+
+There has been
+much discussion about the political divide that exists in the US.  A separate data frame has been
+loaded with the name `ideology` that lists cities, their state, and the political ideology of the
+state.  Created somewhat naively, a description of this `state_ideology` variable follows.
+
+`state_ideology`:  For each city in the dataset, a look-up of the state the city resides in and
+the results of the 2016 Presidential election were given.  If Clinton won the state in 2016,
+`"Liberal"` is the value for `state_ideology`.  If Trump won the state in 2016, `"Conservative"`
+is the value for `state_ideology`.
+
+An interactive table of the `ideology` data frame is  [here](https://ismayc.github.io/Effective-Data-Storytelling-using-the-tidyverse/ideology.html).
+
+*** =instructions
+- Use the `inner_join` function in the `dplyr` package to add the `state` and `state_ideology` 
+columns to the `police_locals` data frame where the key variable is `city` in both data frames.  (Note the
+use of `library(dplyr)` here.  You will always need to load the package first if you would like
+to use the functions inside it.)
+- Recall that the main arguments to `inner_join` are `x`, `y`, and `by`.  `x` corresponds to the data frame you would like to add columns to.  `y` corresponds to the data frame you'd like to add columns from.  `by` corresponds to the name (or names) of the key vectors that you'd like to join the two data frames together by.  Note that the names of the variables for `by` must be inside quotation marks.
+- Assign the name `police_join` to this expanded data frame.
+
+
+*** =hint
+- Remember to use `?inner_join` to get help as to what to provide as arguments to the function.
+
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+library(readr)
+data(police_locals)
+library(readr)
+ideology <- read_csv("http://s3.amazonaws.com/assets.datacamp.com/production/course_3085/datasets/ideology.csv")
+```
+
+*** =sample_code
+```{r}
+library(dplyr)
+# Join police_locals with ideology by city
+# Provide police_join as the name
+police_join <- inner_join(x =  ,
+                          y =  ,
+                          by = " ")
+```
+
+*** =solution
+```{r}
+library(dplyr)
+# Join police_locals with ideology by city
+# Provide police_join as the name
+police_join <- inner_join(x = police_locals, 
+                          y = ideology, 
+                          by = "city")
+```
+
+*** =sct
+```{r}
+test_object("police_join")
+test_error()
+test_function("inner_join", args = "x")
+test_function("inner_join", args = "y")
+test_function("inner_join", args = "by")
+success_msg("Good work! <br><br> THINK ABOUT IT:  How does linking these two data sets together help in analyzing the
+relationship between `state_ideology` and percentage of police officers residing in the
+cities they serve by race?")
+```
+
+
+--- type:MultipleChoiceExercise lang:r xp:50 skills:1 key:15cc059cea
+## Change in observational unit?
+
+Does the `police_join` data frame have a different observational unit than the `police_locals` data frame?
+
+*** =instructions
+- Yes, the observational unit is now **state**.
+- Yes, we have added rows to `police_join` so the observational unit must have changed.
+- No, the observational unit is still the same as it was for `police_locals`.
+- None of the above.
+
+*** =hint
+- Has the specific thing being measured changed by adding on the two variables of `state` and `state_ideology`?
+- You can view the `police_join` data frame [here](https://ismayc.github.io/Effective-Data-Storytelling-using-the-tidyverse/police_join.html).
+
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+data(police_locals)
+library(dplyr)
+library(readr)
+ideology <- read_csv("http://s3.amazonaws.com/assets.datacamp.com/production/course_3085/datasets/ideology.csv")
+police_join <- inner_join(x = police_locals, y = ideology, by = "city")
+```
+
+*** =sct
+```{r}
+msg_bad <- "That is not correct!"
+msg_success <- "Each row still corresponds to a city.  The addition of the two columns only added attributes to the city."
+test_mc(correct = 3, feedback_msgs = c(msg_bad, msg_bad, msg_success, msg_bad))
+```
+
+--- type:MultipleChoiceExercise lang:r xp:50 skills:1 key:4399375881
+## Is it tidy?
+
+Recall that a *tidy* data frame must have three properties:
+
+1. Each variable forms a column.
+2. Each observation forms a row.
+3. Each type of observational unit forms a table.
+
+Is the `police_join` [data frame](https://ismayc.github.io/Effective-Data-Storytelling-using-the-tidyverse/police_join.html) tidy?
+
+*** =instructions
+- Yes, it is neat and easy-to-read.
+- Yes, it follows all of the requirements of a tidy data set as given above.
+- No, it does not meet all of the requirements of a tidy data set.
+- None of the above are correct.
+
+
+*** =hint
+- Is each column of `police_join` a variable? Or is one variable spread across multiple columns?
+
+
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+data(police_locals)
+library(dplyr)
+library(readr)
+ideology <- read_csv("http://s3.amazonaws.com/assets.datacamp.com/production/course_3085/datasets/ideology.csv")
+police_join <- inner_join(x = police_locals, y = ideology, by = "city")
+```
+
+*** =sct
+```{r}
+msg_bad <- "That is not correct!"
+msg_success <- "This is not tidy. The `race` variable is distributed across multiple columns and, thus, violates 'Each variable forms a column.'"
+test_mc(correct = 3, feedback_msgs = c(msg_bad, msg_bad, msg_success, msg_bad))
+```
+
+--- type:NormalExercise lang:r xp:100 skills:1 key:ca52fa48aa
+## Another join
+
+There may be many reasons for police officers to not live in the same cities as they serve.  One potential reason that has been suggested is that the cost of living in some areas is much higher than in other nearby areas.  The Missouri Economic Research and Information Center created a table of the **Composite Cost of Living (Scaled)** by US state for the third quarter of 2016 [here](https://www.missourieconomy.org/indicators/cost_of_living/index.stm).  This data has been loaded as a data frame with the name `cost_of_living` available to view [here](https://ismayc.github.io/Effective-Data-Storytelling-using-the-tidyverse/cost_of_living.html) .  As shown on the map at the link, the overall `index` is given in `cost_of_living` for each state and categories of `"high"`, `"mid"`, and `"low"` are created in the `col_group` variable following the ranges on the map.
+
+*** =instructions
+- Use the `inner_join` function in the `dplyr` package to look-up and add the `index` and `col_group` variables to the `police_join` data frame.  (Note that you'll need to think about what the key variable is here.)
+- Assign a name of your choosing to this expanded data frame.
+
+*** =hint
+- Remember to use `?inner_join` to get help as to what to provide as arguments to the function.
+
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+data(police_locals)
+library(readr)
+library(dplyr)
+ideology <- read_csv("http://ismayc.github.io/Effective-Data-Storytelling-using-the-tidyverse/datasets/ideology.csv")
+police_join <- inner_join(x = police_locals, y = ideology, by = "city")
+cost_of_living <- read_csv("http://s3.amazonaws.com/assets.datacamp.com/production/course_3085/datasets/cost_of_living.csv")
+detach("package:dplyr", unload = TRUE)
+```
+
+*** =sample_code
+```{r}
+
+```
+
+*** =solution
+```{r}
+library(dplyr)
+police_join_cost <- inner_join(x = police_join, y = cost_of_living, by = "state")
+```
+
+*** =sct
+```{r}
+test_library_function("dplyr")
+test_an_object("police_join_cost")
+test_error()
+test_function("inner_join", args = "x")
+test_function("inner_join", args = "y")
+test_function("inner_join", args = "by")
+```
+
+--- type:MultipleChoiceExercise lang:r xp:50 skills:1 key:285e794c07
+## Is this tidy?
+
+Read over another 2014 article from FiveThirtyEight.com entitled "The Dollar-And-Cents Case Against Hollywood’s Exclusion of Women" [here](https://fivethirtyeight.com/features/the-dollar-and-cents-case-against-hollywoods-exclusion-of-women/). We'll be working with a data used in this story stored as a data frame with name `bechdel` in the `fivethirtyeight` package throughout this DataCamp course.
+
+Is the `bechdel` data frame tidy?  You can view an interactive table of it [here](https://ismayc.github.io/Effective-Data-Storytelling-using-the-tidyverse/bechdel.html).
+
+*** =instructions
+- Yes, it is neat and easy-to-read.
+- Yes, it follows all of the requirements of a tidy data set as given above.
+- No, it does not meet all of the requirements of a tidy data set.
+- None of the above are correct.
+
+*** =hint
+- You can find help on `bechdel` via `?bechdel` in the R console.
+- 
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+data(bechdel)
+```
+
+*** =sct
+```{r}
+msg_bad <- "That is not correct!"
+msg_success <- "This is tidy. Each of the three conditions for a tidy data set are met."
+test_mc(correct = 2, feedback_msgs = c(msg_bad, msg_success, msg_bad, msg_bad))
+```
+
+
+--- type:MultipleChoiceExercise lang:r xp:50 skills:1 key:262a102cfb
+## What's the observational unit?
+
+What is the observational unit in the `bechdel` [data frame](https://ismayc.github.io/Effective-Data-Storytelling-using-the-tidyverse/bechdel.html)?
+
+*** =instructions
+- Budget of the movie
+- Movie
+- Whether or not a movie passes the Bechdel Test
+- None of the above
+
+*** =hint
+- What is the "thing" being measured across each row by the variables?
+
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+data(bechdel)
+```
+
+*** =sct
+```{r}
+msg_bad <- "That is not correct!"
+msg_success <- "Each row corresponds to a different movie and the columns are measurements/characteristics of that movie."
+test_mc(correct = 2, feedback_msgs = c(msg_bad, msg_success, msg_bad, msg_bad))
+```

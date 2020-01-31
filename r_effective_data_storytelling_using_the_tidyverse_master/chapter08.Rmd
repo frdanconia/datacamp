@@ -1,0 +1,350 @@
+---
+title       : dplyr Review
+description : Create a new column in a data frame, modify an existing column, and sort by one or more columns using the dplyr package.  Review the main ideas of the Five Main Verbs of dplyr - filter, summarize, group_by, mutate, and arrange.
+
+--- type:NormalExercise lang:r xp:100 skills:1,4 key:762c02a329
+## Modify an existing variable
+
+Recall the `bechdel` data set in the `fivethirtyeight` package used in the 2014 article from FiveThirtyEight.com entitled "The Dollar-And-Cents Case Against Hollywood’s Exclusion of Women" [here](https://fivethirtyeight.com/features/the-dollar-and-cents-case-against-hollywoods-exclusion-of-women/).  As it currently stands in the `fivethirtyeight` package, the `clean_test` variable is just a character vector.  The entries do have a logical order though and should, thus, be converted to a `factor` variable using the `levels` argument to set them as  
+
+```
+levels = c("nowomen", "notalk", "men", "dubious", "ok")
+```
+
+*** =instructions
+- Use the `mutate` function to change `clean_test` to be defined as a `factor` with `levels` defined above.
+- Assign this modified data frame to have the same name of `bechdel`.
+
+
+*** =hint
+- Remember to check the documentation for `factor` via `?factor` if you need assistance.
+
+
+
+*** =pre_exercise_code
+```{r}
+
+```
+
+
+*** =sample_code
+```{r}
+
+```
+
+*** =solution
+```{r}
+library(fivethirtyeight)
+library(dplyr)
+bechdel <- bechdel %>%
+    mutate(clean_test = factor(clean_test, 
+                levels = c("nowomen", "notalk", "men", "dubious", "ok")))
+```
+
+*** =sct
+```{r}
+test_library_function("fivethirtyeight")
+test_library_function("dplyr")
+test_object("bechdel")
+success_msg("Nicely done!")
+test_error()
+```
+
+
+
+--- type:NormalExercise lang:r xp:100 skills:1,4 key:62a044eae1
+## Create a new variable
+
+You will use the modified `bechdel` data frame you created in the last exercise here.  It has been loaded for you.
+
+*** =instructions
+- First create a modified data frame that includes only years 2000 to 2013, inclusive, from the `bechdel` data frame.  Provide the name `bechdel_00_13` for this smaller data frame.  You should check that you have correctly created `bechdel_00_13` in the R Console.
+- Now add a column to `bechdel_00_13` that calculates the domestic return on investment for all 2000 to 2013 movies based on 2013 dollars.  This is calculated as `roi_dom = domgross_2013 / budget_2013` and gives how much money each movie earned for every dollar spent.
+
+
+*** =hint
+- You may want to use the `between` function in `dplyr` for your `filter` here, which expects three arguments:  the name of the variable, the beginning entry, and the ending entry.
+- Remember to add a variable to a data frame you need to assign the name back to include the change.  Something like `flights <- flights %>% mutate(gain = arr_delay - dep_delay)`.
+
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+library(dplyr)
+bechdel <- bechdel %>%
+    mutate(clean_test = factor(clean_test, 
+                levels = c("nowomen", "notalk", "men", "dubious", "ok")))
+```
+
+*** =sample_code
+```{r}
+
+```
+
+*** =solution
+```{r}
+library(fivethirtyeight)
+library(dplyr)
+bechdel_00_13 <- bechdel %>%
+    filter(between(year, 2000, 2013)) %>%
+    mutate(roi_dom = domgross_2013 / budget_2013)
+```
+
+*** =sct
+```{r}
+test_library_function("fivethirtyeight")
+test_library_function("dplyr")
+test_object("bechdel_00_13")
+success_msg("Nicely done!")
+test_error()
+```
+
+
+
+--- type:NormalExercise lang:r xp:100 skills:1,4 key:84af7c1ecd
+## Aggregate based on values of another variable
+
+We will continue using the `bechdel_00_13` data set you created in the last exercise.  It has been loaded for you here.
+
+Let's now see how movies that passed the Bechdel test faired in terms of return on investment to those that didn't pass.  Recall that the `binary` variable stored whether or not a movie passed the Bechdel test.
+
+*** =instructions
+- Determine the mean and median values for `roi_dom` for those that passed the Bechdel test and those that failed.
+- Call these new variables in the aggregated data frame `mean_roi` and `median_roi` respectively.
+- Give the name of `roi_summ` to the aggregated data frame and print it to the Console.
+
+*** =hint
+- You should be using `group_by` and `summarize` here.
+
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+library(dplyr)
+bechdel <- bechdel %>%
+    mutate(clean_test = factor(clean_test, 
+                levels = c("nowomen", "notalk", "men", "dubious", "ok")))
+bechdel_00_13 <- bechdel %>%
+    filter(between(year, 2000, 2013)) %>%
+    mutate(roi_dom = domgross_2013 / budget)
+bechdel_00_13 <- bechdel_00_13 %>%
+    mutate(roi_dom = budget_2013 / budget)    
+```
+
+*** =sample_code
+```{r}
+
+```
+
+*** =solution
+```{r}
+library(dplyr)
+roi_summ <- bechdel_00_13 %>%
+    group_by(binary) %>%
+    summarize(mean_roi = mean(roi_dom),
+              median_roi = median(roi_dom))
+roi_summ
+```
+
+*** =sct
+```{r}
+test_library_function("dplyr")
+test_object("roi_summ")
+success_msg("Nicely done! <br> <br> THINK ABOUT IT:  What can be said about the claim that some movie executives make that movies that
+have women playing strong roles in movies don't make as much return on investment than those that don't based on this data?")
+test_error()
+```
+
+--- type:NormalExercise lang:r xp:100 skills:1,4 key:5e09c823f9
+## Aggregate based on values of two other variables
+
+We will again continue using the `bechdel_00_13` data set you created two exercises ago.  It has been loaded for you here.
+
+Let's now repeat the same analysis as before but look at the mean and median ROI values across both the `decade_code` and `clean_test` variables
+(in that order).  To help with understanding of the results, `decade_code` is 1 for `2010-13` and 2 for `2000-2009`.
+
+*** =instructions
+- Determine the mean and median values for `roi_dom` across `decade_code` and `clean_test`.
+- Call these new variables in the aggregated data frame `mean_roi` and `median_roi` respectively.
+- Sort based on values of `mean_roi` with higher values at the top of the table and lower values at the bottom.
+- Give the name of `roi_summ2` to the aggregated data frame and print it to the Console.
+
+*** =hint
+- You should be using `group_by` and `summarize` here.
+
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+library(dplyr)
+bechdel <- bechdel %>%
+    mutate(clean_test = factor(clean_test, 
+                levels = c("nowomen", "notalk", "men", "dubious", "ok")))
+bechdel_00_13 <- bechdel %>%
+    filter(between(year, 2000, 2013)) %>%
+    mutate(roi_dom = domgross_2013 / budget)
+bechdel_00_13 <- bechdel_00_13 %>%
+    mutate(roi_dom = budget_2013 / budget)    
+```
+
+*** =sample_code
+```{r}
+
+```
+
+*** =solution
+```{r}
+library(dplyr)
+roi_summ2 <- bechdel_00_13 %>%
+    group_by(decade_code, clean_test) %>%
+    summarize(mean_roi = mean(roi_dom),
+              median_roi = median(roi_dom)) %>%
+    arrange(desc(mean_roi))
+roi_summ2
+```
+
+*** =sct
+```{r}
+test_library_function("dplyr")
+test_object("roi_summ2")
+success_msg("Nicely done! <br> <br> THINK ABOUT IT:  What stands out to you as you look at these numbers?  Which `clean_test` level
+had the highest mean return on investment?  For 2010-13?  For 2000-2009?")
+test_error()
+```
+
+--- type:NormalExercise lang:r xp:100 skills:1,4 key:ba670d6c5e
+## Plot the results
+
+We now shift to visualizing the data you created in the last exercise:  `roi_summ2`.  It has been loaded for you.
+
+*** =instructions
+- Write the code to produce the plot shown.
+
+*** =hint
+- 
+
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+library(dplyr)
+library(ggplot2)
+bechdel <- bechdel %>%
+    mutate(clean_test = factor(clean_test, 
+                levels = c("nowomen", "notalk", "men", "dubious", "ok")))
+bechdel_00_13 <- bechdel %>%
+    filter(between(year, 2000, 2013)) %>%
+    mutate(roi_dom = domgross_2013 / budget)
+bechdel_00_13 <- bechdel_00_13 %>%
+    mutate(roi_dom = budget_2013 / budget)    
+roi_summ2 <- bechdel_00_13 %>%
+    group_by(decade_code, clean_test) %>%
+    summarize(mean_roi = mean(roi_dom),
+              median_roi = median(roi_dom)) %>%
+    arrange(desc(mean_roi))    
+ggplot(data = roi_summ2, 
+        mapping = aes(x = factor(decade_code), 
+            y = mean_roi, fill = clean_test)) + 
+    geom_col(position = "dodge", color = "white")
+detach("package:ggplot2", unload = TRUE)  
+```
+
+*** =sample_code
+```{r}
+
+```
+
+*** =solution
+```{r}
+library(ggplot2)
+ggplot(data = roi_summ2, 
+        mapping = aes(x = factor(decade_code), 
+            y = mean_roi, fill = clean_test)) + 
+    geom_col(position = "dodge", color = "white")
+```
+
+*** =sct
+```{r}
+test_library_function("ggplot2")
+test_or({
+  # match original solution
+  ggplot_fun <- ex() %>% check_function("ggplot")
+  ggplot_fun %>% check_arg("data") %>% check_equal(eval = FALSE)
+  ggplot_fun %>% check_arg("mapping")
+  aes_fun <- ex() %>% check_function("aes")
+  aes_fun %>% check_arg("x") %>% check_equal(eval = FALSE)
+  aes_fun %>% check_arg("y") %>% check_equal(eval = FALSE) 
+  aes_fun %>% check_arg("fill") %>% check_equal(eval = FALSE)
+  geom_bar_fun <- ex() %>% check_function("geom_col")
+  geom_bar_fun %>% check_arg("position") %>% check_equal(eval = FALSE)
+  geom_bar_fun %>% check_arg("color") %>% check_equal(eval = FALSE)
+}, {
+  # match solution 1:
+  sol_code1 <- 'ggplot(data = roi_summ2, 
+        mapping = aes(x = factor(decade_code), 
+            y = mean_roi)) + 
+    geom_col(mapping = aes(fill = clean_test), position = "dodge", color = "white")'
+  alt_ex_1 <- ex() %>% override_solution(sol_code1)
+
+  ggplot_fun <- alt_ex_1 %>% check_function("ggplot")
+  ggplot_fun %>% check_arg("data") %>% check_equal(eval = FALSE)
+  ggplot_fun %>% check_arg("mapping")
+  aes_fun <- alt_ex_1 %>% check_function("aes")
+  aes_fun %>% check_arg("x") %>% check_equal(eval = FALSE)
+  aes_fun %>% check_arg("y") %>% check_equal(eval = FALSE)
+  geom_bar_fun <- alt_ex_1 %>% check_function("geom_col")
+  geom_bar_fun %>% check_arg("position") %>% check_equal(eval = FALSE)
+  geom_bar_fun %>% check_arg("color") %>% check_equal(eval = FALSE)
+  geom_bar_fun %>% check_arg("mapping")
+  alt_ex_1 %>% check_function("aes", index = 2) %>% check_arg("fill") %>% check_equal(eval = FALSE)
+})
+success_msg("Great work!")
+test_error()
+```
+
+--- type:NormalExercise lang:r xp:100 skills:1,4 key:04a65758c4
+## What proportions were big?
+
+Recall that you can calculate proportions using the `mean` function.  This works because when R sees something like `my_vec <= 10` it will produce a new vector of the same length as `my_vec` with values of either `TRUE` or `FALSE` corresponding to whether each entry in the vector is less than or equal to 10 or not.
+
+Let's investigate what proportion of movies that passed and failed the Bechdel test in 2013 were big budget films with big international gross earnings.
+
+*** =instructions
+- Calculate the proportion of movies that had a 2013 budget of greater than 100 million (call it `prop_big_budg`) and the proportion of movies that had **international** gross earnings in 2013 or more than 400 million (call it `prop_big_gross`).  (Note that you can use scientific notation to write 100 million as `1e+08` and 400 million as `4e+08` in R if you'd rather not count zeroes.)
+- Assign the name `bech_2013_big` to this aggregated data frame.  It should have two rows and three columns.
+- Some of the entries for `intgross_2013` are missing so you should use `na.omit()` in your piping as well to remove all rows that have a column with a missing value as was done in the **Filtering, Grouping, & Summarizing** chapter.  If you don't, you'll get a value of `NA` for one of the entries of `prop_big_gross`.
+
+*** =hint
+- 
+
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+library(dplyr)
+bechdel <- bechdel %>%
+    mutate(clean_test = factor(clean_test, 
+                levels = c("nowomen", "notalk", "men", "dubious", "ok")))
+```
+
+*** =sample_code
+```{r}
+library(dplyr)
+
+```
+
+*** =solution
+```{r}
+library(dplyr)
+bech_2013_big <- bechdel %>% 
+    na.omit() %>%
+    filter(year == 2013) %>% 
+    group_by(binary) %>% 
+    summarize(prop_big_budg = mean(budget_2013 > 1e+08), 
+        prop_big_gross = mean(intgross_2013 > 4e+08))
+```
+
+*** =sct
+```{r}
+test_library_function("dplyr")
+test_object("bech_2013_big")
+success_msg("Great work! <br><br> THINK ABOUT IT:  What do these results tell you about how 2013 movies that passed the Bechdel test compared to those that didn't in terms of big budget, high grossing movies?")
+test_error()
+```
+
+

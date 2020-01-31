@@ -1,0 +1,16 @@
+title: Effective Data Storytelling using the tidyverse (FREE)
+description: This course is designed to supplement and build on the content covered
+  at <a href="http://moderndive.com">http://moderndive.com</a> and the slides at <a
+  href="http://bit.ly/soc301-slides">http://bit.ly/soc301-slides</a>. It assumes that
+  you have completed the <a href="https://www.datacamp.com/courses/free-introduction-to-r">Introduction
+  to R course on DataCamp</a>.
+difficulty_level: 2
+time_needed: 15 hours
+from: tidyverse-base-prod:1
+datasets:
+  cost_of_living.csv: Cost of living
+  division_region.csv: Division region
+  divisions.csv: Divisions
+  ideology.csv: Ideology
+  police_locals.csv: Police locals
+  total_fertility.csv: Total fertility

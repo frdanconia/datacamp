@@ -1,0 +1,24 @@
+---
+title: "cost_of_living"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(DT)
+library(readr)
+#library(moderndive)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+cost_of_living <- read_csv("http://s3.amazonaws.com/assets.datacamp.com/production/course_3085/datasets/cost_of_living.csv")
+
+datatable(cost_of_living,
+  class = 'cell-border stripe',
+  rownames = FALSE,
+  filter = list(position = 'top'),
+  options = list(pageLength = nrow(cost_of_living), 
+    autoWidth = TRUE,
+    bInfo = FALSE,
+    paging = FALSE))
+```
+

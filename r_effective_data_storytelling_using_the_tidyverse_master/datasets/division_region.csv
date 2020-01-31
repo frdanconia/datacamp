@@ -1,0 +1,52 @@
+state,division,region
+Connecticut,New England,Northeast
+Maine,New England,Northeast
+Massachusetts,New England,Northeast
+New Hampshire,New England,Northeast
+Rhode Island,New England,Northeast
+Vermont,New England,Northeast
+New Jersey,Mid Atlantic,Northeast
+New York,Mid Atlantic,Northeast
+Pennsylvania,Mid Atlantic,Northeast
+Illinois,East North Central,Midwest
+Indiana,East North Central,Midwest
+Michigan,East North Central,Midwest
+Ohio,East North Central,Midwest
+Wisconsin,East North Central,Midwest
+Iowa,West North Central,Midwest
+Kansas,West North Central,Midwest
+Minnesota,West North Central,Midwest
+Missouri,West North Central,Midwest
+Nebraska,West North Central,Midwest
+North Dakota,West North Central,Midwest
+South Dakota,West North Central,Midwest
+Delaware,Mid Atlantic,Northeast
+Florida,South Atlantic,South
+Georgia,South Atlantic,South
+Maryland,Mid Atlantic,Northeast
+North Carolina,South Atlantic,South
+South Carolina,South Atlantic,South
+Virginia,South Atlantic,South
+District of Columbia,Mid Atlantic,Northeast
+West Virginia,East South Central,South
+Alabama,East South Central,South
+Kentucky,East South Central,South
+Mississippi,East South Central,South
+Tennessee,East South Central,South
+Arkansas,West South Central,South
+Louisiana,West South Central,South
+Oklahoma,West South Central,South
+Texas,West South Central,South
+Arizona,Southwest,West
+Colorado,Mountain,West
+Idaho,Mountain,West
+Montana,Mountain,West
+Nevada,Southwest,West
+New Mexico,Southwest,West
+Utah,Mountain,West
+Wyoming,Mountain,West
+Alaska,Pacific,West
+California,Pacific,West
+Hawaii,Pacific,West
+Oregon,Pacific,West
+Washington,Pacific,West

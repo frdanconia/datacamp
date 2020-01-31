@@ -1,0 +1,133 @@
+---
+title: "ModernDive data frames"
+author: "Chester Ismay"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+This page provides an interactive way to view the data frames used in the [ModernDive](http://moderndive.com) textbook.  It will take a few seconds to load initially.  
+
+You can click on the **Chapter** the specific data frame is introduced in the floating Table of Contents.  The specific
+package the data frame is included in is provided as a secondary header.  
+
+These interactive data tables were created using the [`DT` R package](https://rstudio.github.io/DT/).  For data frames larger than 100 rows, the data has been split onto multiple
+pages for ease of use. For data frames larger than 5000 rows, a random sample of size 5000 of the data
+is selected instead.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, warning=FALSE)
+library(DT)
+library(nycflights13)
+library(dplyr)
+library(mosaic)
+
+interact_df <- function(data){
+  
+  if(nrow(data) > 100){
+    datatable(resample(data, size = min(5000, nrow(data)), replace = FALSE),
+      class = 'cell-border stripe',
+      rownames = FALSE,
+      filter = list(position = 'top'))
+  } else {
+  datatable(data,
+    class = 'cell-border stripe',
+    rownames = FALSE,
+    filter = list(position = 'top'),
+    options = list(pageLength = nrow(data), 
+      autoWidth = TRUE,
+      bInfo = FALSE,
+      paging = FALSE))
+  }
+}
+```
+
+
+
+# Chapter 3
+
+<p style="font-size:36px">`nycflights13`</p>
+
+## `flights`
+
+```{r}
+interact_df(flights)
+```
+
+***
+
+## `weather`
+
+```{r}
+interact_df(weather)
+```
+
+***
+
+## `planes`
+
+```{r}
+interact_df(planes)
+```
+
+***
+
+## `airports`
+
+```{r}
+interact_df(airports)
+```
+
+***
+
+## `airlines`
+
+```{r}
+interact_df(airlines)
+```
+
+***
+
+<p style="font-size:36px">Derived data</p>
+
+## `joined_flights`
+
+```{r}
+joined_flights <- inner_join(x = flights, y = airlines, by = "carrier")
+interact_df(joined_flights)
+```
+
+# Chapter 4
+
+<p style="font-size:36px">Derived data</p>
+
+## `all_alaska_flights`
+
+```{r}
+library(nycflights13)
+all_alaska_flights <- flights %>% 
+  filter(carrier == "AS")
+interact_df(all_alaska_flights)
+```
+
+***
+
+## `early_january_weather`
+
+```{r}
+early_january_weather <- weather %>% 
+  filter(origin == "EWR" & month == 1 & day <= 15)
+interact_df(early_january_weather)
+```
+
+***
+
+## `flights_namedports`
+
+```{r}
+flights_namedports <- flights %>% 
+  inner_join(airports, by = c("origin" = "faa"))
+interact_df(flights_namedports)
+```
+

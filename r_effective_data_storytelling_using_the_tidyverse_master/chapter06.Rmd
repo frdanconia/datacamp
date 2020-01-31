@@ -1,0 +1,417 @@
+---
+title       : ggplot2 Review
+description : Identifying and creating the appropriate plot based on different types of variables using the ggplot2 package
+
+--- type:NormalExercise lang:r xp:100 skills:1 key:f6d3394a54
+## Fixing an inappropriate plot for one variable
+
+When one doesn't properly use the correct plot based on the type of variables, some pretty strange plots can be produced.  These plots are hard to interpret and often extremely ineffective at telling a story about the data.  This exercise and the ones that follow will have you examine why a plot is incorrect and/or fix incorrect code to make a more appropriate plot.
+
+Read over the 2014 article from FiveThirtyEight.com entitled  "The Economic Guide To Picking A College Major" [here](http://fivethirtyeight.com/features/the-economic-guide-to-picking-a-college-major/).  You can find the data corresponding to the story as `college_all_ages` in the `fivethirtyeight` R package.  We are interested in looking at the distribution of the `unemployment_rate` variable in this `college_all_ages` data frame.
+
+*** =instructions
+- Fix the code given to produce an appropriate plot looking at how `unemployment_rate` varies in the `college_all_ages` data frame.
+- Make sure to also use the `color = "white"` argument to better
+clarify your plot.
+
+*** =hint
+- What type of variable is `unemployment_rate`?
+- The Coggle mind map may be of assistance [here](https://coggle.it/diagram/V_G2gzukTDoQ-aZt-).
+
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+library(ggplot2)
+ggplot(data = college_all_ages, mapping = aes(x = unemployment_rate)) +
+  geom_bar()
+```
+
+*** =sample_code
+```{r}
+library(fivethirtyeight)
+library(ggplot2)
+ggplot(data = college_all_ages, mapping = aes(x = unemployment_rate)) +
+  geom_bar()
+```
+
+*** =solution
+```{r}
+library(fivethirtyeight)
+library(ggplot2)
+ggplot(data = college_all_ages, mapping = aes(x = unemployment_rate)) +
+  geom_histogram(color = "white")
+```
+
+*** =sct
+```{r}
+test_library_function("ggplot2")
+test_ggplot(#check_data = TRUE, 
+            check_aes = TRUE, check_geom = TRUE,
+            check_geom_params = TRUE)
+success_msg("Nicely done! <br><br> THINK ABOUT IT:  Why is a barplot inappropriate when looking at the distribution of a numerical variable?")
+test_error()
+```
+
+--- type:NormalExercise lang:r xp:100 skills:1 key:5d55c9a096
+## Fixing an inappropriate plot for two variables
+
+The last exercise showed the distribution of `unemployment_rate` across all majors.  The first natural question that comes to mind is how
+the distribution varies while taking into account different categories of college majors.  The plot shown is one attempt at doing so, but has some major flaws.  Your task is to produce a more appropriate plot after joining with another data frame to use a variable with fewer categories than `major_category`.
+
+
+*** =instructions
+- Join with the `divisions` data frame to look-up the values of division for each of the values of `major_category` in `college_all_ages`.  (You should print the `divisions` data frame in the Console to get a sense for how `major_category` levels were grouped in the `division` variable in the `divisions` data frame.) 
+- Give `college_with_divisions` as a name to this joined data frame.
+- Write code to produce an appropriate plot looking at how `unemployment_rate` varies across `division` in the `college_with_divisions` data frame.  Your plot should not involve a histogram in any way.
+
+*** =hint
+- What type of variable is `unemployment_rate`?
+- The Coggle mind map may be of assistance [here](https://coggle.it/diagram/V_G2gzukTDoQ-aZt-).
+
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+library(ggplot2)
+library(readr)
+ggplot(data = college_all_ages, mapping = aes(x = unemployment_rate, fill = major_category)) +
+  geom_histogram(color = "white")
+divisions <- read_csv("http://s3.amazonaws.com/assets.datacamp.com/production/course_3085/datasets/divisions.csv")
+```
+
+*** =sample_code
+```{r}
+# Make sure to load the needed packages!
+
+# Join first to create `college_with_divisions`
+
+# Now create an appropriate plot that is not related to a histogram
+
+
+```
+
+*** =solution
+```{r}
+# Make sure to load the needed packages!
+library(fivethirtyeight)
+library(ggplot2)
+library(dplyr)
+# Join first to create data frame with a name of `college_with_divisions`
+college_with_divisions <- inner_join(x = college_all_ages,
+                                     y = divisions,
+                                     by = "major_category")
+# Now create an appropriate plot that is not related to a histogram
+ggplot(data = college_with_divisions, 
+       mapping = aes(x = division, y = unemployment_rate)) +
+  geom_boxplot()
+```
+
+*** =sct
+```{r}
+test_library_function("ggplot2")
+test_library_function("fivethirtyeight")
+test_library_function("dplyr")
+test_error()
+test_function("inner_join", args = "x")
+test_function("inner_join", args = "y")
+test_function("inner_join", args = "by")
+test_ggplot(check_data = TRUE, check_aes = TRUE, check_geom = TRUE)
+success_msg("Nicely done! <br><br> THINK ABOUT IT:  What does this plot tell us about the variability of unemployment rates based on division?")
+test_error()
+```
+
+--- type:NormalExercise lang:r xp:100 skills:1 key:f3b3d2cde5
+## Fix the incorrect code
+
+Recall the `bechdel` data frame you have worked with previously including the five-year time increments.  It has been loaded into your environment here.  Your friend is trying to produce the side-by-side barplot shown, but is having a really tough time and has made many mistakes in their code.  
+
+*** =instructions
+- Fix their code given to produce the plot shown.
+
+*** =hint
+
+
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+library(dplyr)
+library(ggplot2)
+data(bechdel)
+year_bins <- c("1970-'74", "1975-'79", "1980-'84", "1985-'89",
+               "1990-'94", "1995-'99", "2000-'04", "2005-'09",
+               "2010-'13")
+bechdel <- bechdel %>%
+  mutate(five_year = cut(year, 
+                         breaks = seq(1969, 2014, 5), 
+                         labels = year_bins)) %>% 
+  mutate(clean_test = factor(clean_test, 
+                             levels = c("nowomen", "notalk", "men", "dubious", "ok")))
+ggplot(data = bechdel, mapping = aes(x = five_year, fill = binary)) +
+    geom_bar(position = "dodge")
+```
+
+*** =sample_code
+```{r}
+library(ggplot)
+ggplot2(data = bechdel, 
+        mapping = aes(x = "five_year", y = binary) +
+    geom_bar(fill = binary, position = dodge)
+    
+```
+
+*** =solution
+```{r}
+library(ggplot2)
+ggplot(data = bechdel, 
+       mapping = aes(x = five_year, fill = binary)) +
+    geom_bar(position = "dodge")
+```
+
+*** =sct
+```{r}
+test_library_function("ggplot2")
+test_or({
+  # match original solution
+  ggplot_fun <- ex() %>% check_function("ggplot")
+  ggplot_fun %>% check_arg("data") %>% check_equal(eval = FALSE)
+  ggplot_fun %>% check_arg("mapping")
+  aes_fun <- ex() %>% check_function("aes")
+  aes_fun %>% check_arg("x") %>% check_equal(eval = FALSE)
+  aes_fun %>% check_arg("fill") %>% check_equal(eval = FALSE)
+  geom_bar_fun <- ex() %>% check_function("geom_bar")
+  geom_bar_fun %>% check_arg("position") %>% check_equal(eval = FALSE)
+}, {
+  # match solution 1:
+  sol_code1 <- 'ggplot(data = bechdel, 
+       mapping = aes(x = five_year)) +
+    geom_bar(mapping = aes(fill = binary), position = "dodge")'
+  alt_ex_1 <- ex() %>% override_solution(sol_code1)
+
+  ggplot_fun <- alt_ex_1 %>% check_function("ggplot")
+  ggplot_fun %>% check_arg("data") %>% check_equal(eval = FALSE)
+  ggplot_fun %>% check_arg("mapping")
+  aes_fun <- alt_ex_1 %>% check_function("aes")
+  aes_fun %>% check_arg("x") %>% check_equal(eval = FALSE)
+  geom_bar_fun <- alt_ex_1 %>% check_function("geom_bar")
+  geom_bar_fun %>% check_arg("position") %>% check_equal(eval = FALSE)
+  geom_bar_fun %>% check_arg("mapping")
+  alt_ex_1 %>% check_function("aes", index = 2) %>% check_arg("fill") %>% check_equal(eval = FALSE)
+})
+test_error()
+```
+
+--- type:MultipleChoiceExercise lang:r xp:50 skills:1 key:478b35a5f1
+## What happened here?
+
+We now shift our data set of interest to the `flying` data frame in the `fivethirtyeight` package.  First, read the relevant 2014 article on FiveThirtyEight.com [here](https://fivethirtyeight.com/datalab/airplane-etiquette-recline-seat/). Next, carefully read over the documentation for `flying` via `?fivethirtyeight::flying` as well before you begin this problem to better understand what the variables represent.  Note here that we use `na.omit(flying)` instead of `flying` to remove all of the rows with missing values in the data frame before plotting.
+
+The plot that is given is not an appropriate plot for looking at the relationship between `age` and `recline_rude`.  What would be the more appropriate plot?
+
+
+
+*** =instructions
+
+- Boxplot
+- Line graph
+- Faceted histogram
+- Stacked barplot
+
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+library(ggplot2)
+ggplot(data = na.omit(flying), mapping = aes(x = age, y = recline_rude)) +
+        geom_point()
+```
+
+*** =sct
+```{r}
+msg_bad <- "That is not correct!"
+msg_success <- "Since both variables are categorical, a barplot is the best option here.  We are interested in looking at how the percentages of opinions vary across age and there are only three levels to `recline_rude` so a stacked barplot is a good option here."
+test_mc(correct = 4, feedback_msgs = c(msg_bad, msg_bad, msg_bad, msg_success))
+```
+
+--- type:NormalExercise lang:r xp:100 skills:1 key:7405088f95
+## Reverse engineer the barplot
+
+Let's create the appropriate plot referenced in the last exercise.
+
+
+*** =instructions
+- Give the correct code needed to produce the plot shown based on the `na.omit(flying)` data frame derived from `flying` in the `fivethirtyeight` package.  Remember to load the needed packages!
+
+
+*** =hint
+- The `position = "fill"` argument is used in `geom_bar` here.  Refer back to the Bechdel problem in the Barplots chapter for more explanation.
+- Recall that stacked barplots use `fill = ` to specify how the bars should be shaded.
+
+
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+library(ggplot2)
+ggplot(data = na.omit(flying), mapping = aes(x = age, fill = recline_rude)) +
+    geom_bar(position = "fill", color = "white")
+```
+
+*** =sample_code
+```{r}
+
+```
+
+*** =solution
+```{r}
+library(fivethirtyeight)
+library(ggplot2)
+ggplot(data = na.omit(flying), mapping = aes(x = age, fill = recline_rude)) +
+    geom_bar(position = "fill", color = "white")
+```
+
+*** =sct
+```{r}
+test_library_function("ggplot2")
+test_library_function("fivethirtyeight")
+test_error()
+test_or({
+  # match original solution
+  ggplot_fun <- ex() %>% check_function("ggplot")
+  ggplot_fun %>% check_arg("data") %>% check_equal(eval = FALSE)
+  ggplot_fun %>% check_arg("mapping")
+  aes_fun <- ex() %>% check_function("aes")
+  aes_fun %>% check_arg("x") %>% check_equal(eval = FALSE)
+  aes_fun %>% check_arg("fill") %>% check_equal(eval = FALSE)
+  geom_bar_fun <- ex() %>% check_function("geom_bar")
+  geom_bar_fun %>% check_arg("position") %>% check_equal(eval = FALSE)
+  geom_bar_fun %>% check_arg("color") %>% check_equal(eval = FALSE)
+}, {
+  # match solution 1:
+  sol_code1 <- 'ggplot(data = na.omit(flying), mapping = aes(x = age)) +
+    geom_bar(mapping = aes(fill = recline_rude), position = "fill", color = "white")'
+  alt_ex_1 <- ex() %>% override_solution(sol_code1)
+
+  ggplot_fun <- alt_ex_1 %>% check_function("ggplot")
+  ggplot_fun %>% check_arg("data") %>% check_equal(eval = FALSE)
+  ggplot_fun %>% check_arg("mapping")
+  aes_fun <- alt_ex_1 %>% check_function("aes")
+  aes_fun %>% check_arg("x") %>% check_equal(eval = FALSE)
+  geom_bar_fun <- alt_ex_1 %>% check_function("geom_bar")
+  geom_bar_fun %>% check_arg("position") %>% check_equal(eval = FALSE)
+  geom_bar_fun %>% check_arg("color") %>% check_equal(eval = FALSE)
+  geom_bar_fun %>% check_arg("mapping")
+  alt_ex_1 %>% check_function("aes", index = 2) %>% check_arg("fill") %>% check_equal(eval = FALSE)
+})
+success_msg("Nicely done! <br><br> THINK ABOUT IT:  What does this plot tell us about how different age groups view the rudeness of reclining seats on airplanes?")
+test_error()
+```
+
+
+
+--- type:NormalExercise lang:r xp:100 skills:1 key:1c63ea8be9
+## Unpacking the pieces
+
+Recall the [`police_tidy`](https://ismayc.github.io/Effective-Data-Storytelling-using-the-tidyverse/police_tidy.html) data frame you worked with earlier in the course.  Let's investigate four variables at once in the following plot.
+
+*** =instructions
+- Write the code necessary to reproduce this plot focused on having you look into multivariate relationships in the data.
+- Note that you don't need to load the `fivethirtyeight` package here since the `police_tidy` data frame has been loaded into your environment for you.
+
+*** =hint
+
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+data(police_locals)
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(tidyr)
+ideology <- read_csv("http://s3.amazonaws.com/assets.datacamp.com/production/course_3085/datasets/ideology.csv")
+police_join <- inner_join(x = police_locals, y = ideology, by = "city")
+cost_of_living <- read_csv("http://s3.amazonaws.com/assets.datacamp.com/production/course_3085/datasets/cost_of_living.csv")
+police_join_cost <- inner_join(x = police_join, y = cost_of_living, by = "state")
+police_tidy <- police_join_cost %>% 
+  gather(key = "race", value = "reside_perc", all:asian) %>% 
+  filter(race %in% c("white", "non_white")) %>% 
+  mutate(col_group = factor(col_group, levels = c("high", "mid", "low")))
+ggplot(data = police_tidy, mapping = aes(x = index, y = reside_perc)) +
+  geom_point(aes(color = race, shape = state_ideology))
+```
+
+*** =sample_code
+```{r}
+
+```
+
+*** =solution
+```{r}
+library(ggplot2)
+ggplot(data = police_tidy, mapping = aes(x = index, y = reside_perc)) +
+  geom_point(aes(color = race, shape = state_ideology)) 
+```
+
+*** =sct
+```{r}
+test_library_function("ggplot2")
+test_error()
+test_or({
+  # match original solution
+  ggplot_fun <- ex() %>% check_function("ggplot")
+  ggplot_fun %>% check_arg("data") %>% check_equal(eval = FALSE)
+  ggplot_fun %>% check_arg("mapping")
+  aes_fun <- ex() %>% check_function("aes")
+  aes_fun %>% check_arg("x") %>% check_equal(eval = FALSE)
+  aes_fun %>% check_arg("y") %>% check_equal(eval = FALSE)
+  geom_point_fun <- ex() %>% check_function("geom_point")
+  aes_fun_2 <- geom_point_fun %>% check_arg("mapping")
+  aes_fun_2 %>% check_function("aes", index = 2) %>% check_arg("color") %>% check_equal(eval = FALSE)
+  aes_fun_2 %>% check_function("aes", index = 2) %>% check_arg("shape") %>% check_equal(eval = FALSE)
+}, {
+  # match solution 1:
+  sol_code1 <- 'ggplot(data = police_tidy, mapping = aes(x = index, y = reside_perc, color = race)) +
+  geom_point(aes(shape = state_ideology)) '
+  alt_ex_1 <- ex() %>% override_solution(sol_code1)
+
+  ggplot_fun <- alt_ex_1 %>% check_function("ggplot")
+  ggplot_fun %>% check_arg("data") %>% check_equal(eval = FALSE)
+  ggplot_fun %>% check_arg("mapping")
+  aes_fun <- alt_ex_1 %>% check_function("aes")
+  aes_fun %>% check_arg("x") %>% check_equal(eval = FALSE)
+  aes_fun %>% check_arg("y") %>% check_equal(eval = FALSE)
+  aes_fun %>% check_arg("color") %>% check_equal(eval = FALSE)
+  geom_bar_fun <- alt_ex_1 %>% check_function("geom_point")
+  aes_fun_2 <- geom_point_fun %>% check_arg("mapping")
+  aes_fun_2 %>% check_function("aes", index = 2) %>% check_arg("shape") %>% check_equal(eval = FALSE)
+}, {
+  # match solution 2:
+  sol_code2 <- 'ggplot(data = police_tidy, mapping = aes(x = index, y = reside_perc, shape = state_ideology)) +
+  geom_point(aes(color = race)) '
+  alt_ex_2 <- ex() %>% override_solution(sol_code2)
+
+  ggplot_fun <- alt_ex_2 %>% check_function("ggplot")
+  ggplot_fun %>% check_arg("data") %>% check_equal(eval = FALSE)
+  ggplot_fun %>% check_arg("mapping")
+  aes_fun <- alt_ex_2 %>% check_function("aes")
+  aes_fun %>% check_arg("x") %>% check_equal(eval = FALSE)
+  aes_fun %>% check_arg("y") %>% check_equal(eval = FALSE)
+  aes_fun %>% check_arg("shape") %>% check_equal(eval = FALSE)
+  geom_bar_fun <- alt_ex_2 %>% check_function("geom_point")
+  aes_fun_2 <- geom_point_fun %>% check_arg("mapping")
+  aes_fun_2 %>% check_function("aes", index = 2) %>% check_arg("color") %>% check_equal(eval = FALSE)
+}, {
+  # match solution 3:
+  sol_code3 <- 'ggplot(data = police_tidy, mapping = aes(x = index, y = reside_perc, shape = state_ideology, color = race)) +
+  geom_point()'
+  alt_ex_3 <- ex() %>% override_solution(sol_code3)
+
+  ggplot_fun <- alt_ex_3 %>% check_function("ggplot")
+  ggplot_fun %>% check_arg("data") %>% check_equal(eval = FALSE)
+  ggplot_fun %>% check_arg("mapping")
+  aes_fun <- alt_ex_3 %>% check_function("aes")
+  aes_fun %>% check_arg("x") %>% check_equal(eval = FALSE)
+  aes_fun %>% check_arg("y") %>% check_equal(eval = FALSE)
+  aes_fun %>% check_arg("shape") %>% check_equal(eval = FALSE)
+  aes_fun %>% check_arg("color") %>% check_equal(eval = FALSE)
+  geom_bar_fun <- alt_ex_3 %>% check_function("geom_point")
+})
+success_msg("Nicely done! <br><br> THINK ABOUT IT:  What stands out to you as you view this plot? Particularly, how do the relationships change when comparing white and non-white?  What about Conservative versus Liberal?")
+test_error()
+```

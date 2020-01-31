@@ -1,0 +1,585 @@
+---
+title       : Barplots
+description : Generate and examine barplots displaying one categorical variable or relationships between multiple categorical variables via the ggplot2 package using datasets in and derived from the fivethirtyeight R package
+  
+--- type:NormalExercise lang:r xp:100 skills:1 key:958d730f0a
+## Distribution of one categorical variable
+
+When working with a qualitative variable (one in which the data falls into many different categories), the first plot you will likely make is a barplot.  This will show how many of each category there are for that particular categorical variable.
+
+Recall the `bechdel` data frame that was introduced earlier in the course from the `fivethirtyeight` R package.  It has been loaded into the environment here.  Suppose we are interested in analyzing the distribution of the `clean_test` variable.  
+
+Observe and reflect on the **The Bechdel Test Over Time** image in the article ["The Dollar-And-Cents Case Against Hollywood’s Exclusion of Women"](https://fivethirtyeight.com/features/the-dollar-and-cents-case-against-hollywoods-exclusion-of-women/).  You can use this to get a better idea as to what the categories of `clean_test` represent.
+
+To assist with the plotting, the `clean_test` variable has been converted to a `factor` with `levels` set corresponding to the order given in the plot in the article.
+
+*** =instructions
+- Produce an appropriate plot looking at the distribution of `clean_test` in the `bechdel` data frame.
+
+*** =hint
+- Remember that we use the `aes` function to map aesthetics.  Also be sure there are two `))` before the `+`:  one for the `ggplot` call and one for the `aes` call.
+- Barplots are created using `geom_bar` when we want to determine the total number in each category from a data set.
+
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+data(bechdel)
+```
+
+*** =sample_code
+```{r}
+library(fivethirtyeight)
+library(ggplot2)
+# Convert to factor
+bechdel$clean_test <- factor(bechdel$clean_test,
+    levels = c("nowomen", "notalk", "men", "dubious", "ok"))
+
+# Produce an appropriate plot by filling in the entries correctly
+ggplot(data = ,
+       mapping = aes(   )) +
+  geom_   ()
+```
+
+*** =solution
+```{r}
+library(fivethirtyeight)
+library(ggplot2)
+
+# Produce an appropriate plot by filling in the entries correctly below
+ggplot(data = bechdel,
+       mapping = aes(x = clean_test)) +
+  geom_bar()
+```
+
+*** =sct
+```{r}
+test_library_function("ggplot2")
+test_ggplot(check_data = TRUE, check_aes = TRUE, check_geom = TRUE)
+success_msg("Nicely done! <br><br> THINK ABOUT IT:  What does this plot tell us in terms of movies passing the Bechdel test or not since 1970?")
+test_error()
+```
+
+--- type:NormalExercise lang:r xp:100 skills:1 key:4171b4d317
+## Distribution of another categorical variable
+
+The plot in the previous exercise is a little deceiving since it appears that `ok` stands above the other categories.  There is a different variable in `bechdel` that better shows whether a movie passed or failed the Bechdel test.
+
+*** =instructions
+- Use the `glimpse` function on `bechdel` to identify this more appropriate variable. (Recall that you can test code in the **R Console** first, then enter it into the script window.)
+- Produce a barplot of this variable and also `fill` based on the different values of the variable.
+
+*** =hint
+- Remember to load the `tibble` package in order to use `glimpse`.
+- Barplots are created using `geom_bar` when we want to determine the total number in each category from a data set.
+- Note the location of `fill = ` here inside the `aes` function.
+
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+data(bechdel)
+```
+
+*** =sample_code
+```{r}
+library(fivethirtyeight)
+bechdel$clean_test <- factor(bechdel$clean_test,
+    ordered = TRUE,
+    levels = c("nowomen", "notalk", "men", "dubious", "ok"))
+
+# Identify the variable that gives pass/fail of the Bechdel test
+library( )
+
+
+# Produce an appropriate plot by filling in the entries correctly
+library(ggplot2)
+ggplot(data = ,
+       mapping = aes(   , fill = )) +
+  geom_   ()
+```
+
+*** =solution
+```{r}
+library(fivethirtyeight)
+bechdel$clean_test <- factor(bechdel$clean_test,
+    ordered = TRUE,
+    levels = c("nowomen", "notalk", "men", "dubious", "ok"))
+
+# Identify the variable that gives pass/fail of the Bechdel test
+library(tibble)
+glimpse(bechdel)
+
+# Produce an appropriate plot by filling in the entries correctly below
+library(ggplot2)
+ggplot(data = bechdel,
+       mapping = aes(x = binary, fill = binary)) +
+  geom_bar()
+```
+
+*** =sct
+```{r}
+test_library_function("tibble")
+test_library_function("ggplot2")
+test_ggplot(check_data = TRUE, check_aes = TRUE, check_geom = TRUE)
+
+test_error()
+```
+
+--- type:NormalExercise lang:r xp:100 skills:1 key:a7640e7d88
+## Movies over time
+
+The **The Bechdel Test Over Time** image in the article ["The Dollar-And-Cents Case Against Hollywood’s Exclusion of Women"](https://fivethirtyeight.com/features/the-dollar-and-cents-case-against-hollywoods-exclusion-of-women/) breaks down the distribution of `clean_test` across five year intervals from 1970 to 2014 (1970-'74, 1975-'79, etc.).  Technically, the last interval only contains four years: 2010-'13.
+
+A new variable called `five_year` has been added to the `bechdel` data frame that shows which five-year time interval each of the movies there falls within.  This new variable in addition to the other variables in the `bechdel` data frame can be viewed interactively [here](https://ismayc.github.io/Effective-Data-Storytelling-using-the-tidyverse/bechdel_five_year.html).
+
+*** =instructions
+- Produce a barplot showing the counts of the number of movies in each  of the different `five_year` increments.
+
+*** =hint
+- Barplots are created using `geom_bar` when we want to determine the total number in each category from a data set.
+
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+library(dplyr)
+data(bechdel)
+year_bins <- c("1970-'74", "1975-'79", "1980-'84", "1985-'89",
+               "1990-'94", "1995-'99", "2000-'04", "2005-'09",
+               "2010-'13")
+bechdel <- bechdel %>%
+  mutate(five_year = cut(year, 
+                         breaks = seq(1969, 2014, 5), 
+                         labels = year_bins)) %>% 
+  mutate(clean_test = factor(clean_test, 
+                             levels = c("nowomen", "notalk", "men", "dubious", "ok")))
+```
+
+*** =sample_code
+```{r}
+library(fivethirtyeight)
+library(ggplot2)
+
+```
+
+*** =solution
+```{r}
+library(fivethirtyeight)
+library(ggplot2)
+ggplot(data = bechdel,
+       mapping = aes(x = five_year)) +
+  geom_bar()
+```
+
+*** =sct
+```{r}
+test_library_function("ggplot2")
+test_ggplot(check_data = TRUE, check_aes = TRUE, check_geom = TRUE)
+
+test_error()
+```
+
+--- type:NormalExercise lang:r xp:100 skills:1 key:a52a0a9153
+## Bechdel pass/fail over time (stacked)
+
+We can now look at the relationship of movies passing or failing the Bechdel test based on the `five_year` time periods.  In other words, we will be "painting" the bars you created in the previous exercise proportionally based on the number that `FAIL` or `PASS`.  The plot from the previous exercise has been added here.
+
+*** =instructions
+- Produce a barplot showing the counts of the number of movies in each of the different `five_year` increments `fill`ed according to the levels of `binary`.
+
+*** =hint
+- Barplots are created using `geom_bar` when we want to determine the total number in each category from a data set.
+- To change the colors of the bars based on another variable in the same data frame (say `var2`), include `fill = var2` inside of `aes`.  Note that `var2` is just a general variable and not one actually in `bechdel`.
+
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+library(dplyr)
+library(ggplot2)
+data(bechdel)
+year_bins <- c("1970-'74", "1975-'79", "1980-'84", "1985-'89",
+               "1990-'94", "1995-'99", "2000-'04", "2005-'09",
+               "2010-'13")
+bechdel <- bechdel %>%
+  mutate(five_year = cut(year, 
+                         breaks = seq(1969, 2014, 5), 
+                         labels = year_bins)) %>% 
+  mutate(clean_test = factor(clean_test, 
+                             levels = c("nowomen", "notalk", "men", "dubious", "ok")))
+ggplot(data = bechdel,
+       mapping = aes(x = five_year)) +
+  geom_bar()
+```
+
+*** =sample_code
+```{r}
+library(fivethirtyeight)
+library(ggplot2)
+
+```
+
+*** =solution
+```{r}
+library(fivethirtyeight)
+library(ggplot2)
+ggplot(data = bechdel,
+       mapping = aes(x = five_year, fill = binary)) +
+  geom_bar()
+```
+
+*** =sct
+```{r}
+test_library_function("ggplot2")
+test_ggplot(check_data = TRUE, check_aes = TRUE, check_geom = TRUE)
+
+test_error()
+```
+
+--- type:NormalExercise lang:r xp:100 skills:1 key:e98815e0b9
+## Bechdel pass/fail over time (side-by-side)
+
+We can also shift the bars next to each other instead of being `stack`ed while still being based on the number that `FAIL` or `PASS`.  The plot from the previous exercise has been added here.
+
+*** =instructions
+- Produce a barplot showing the counts of the number of movies in each of the different `five_year` increments `fill`ed according to the levels of `binary`, but use `position = "dodge"` instead.
+
+*** =hint
+- Barplots are created using `geom_bar` when we want to determine the total number in each category from a data set.
+- To change the colors of the bars based on another variable (say `var2`), include `fill = var2` inside of `aes`.  Note that `var2` is just a general variable and not one actually in `bechdel`.
+- To get assistance on using the `geom_bar` function, remember to enter `?geom_bar` in the Console.  Of particular interest here is the `position` argument.
+
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+library(dplyr)
+library(ggplot2)
+data(bechdel)
+year_bins <- c("1970-'74", "1975-'79", "1980-'84", "1985-'89",
+               "1990-'94", "1995-'99", "2000-'04", "2005-'09",
+               "2010-'13")
+bechdel <- bechdel %>%
+  mutate(five_year = cut(year, 
+                         breaks = seq(1969, 2014, 5), 
+                         labels = year_bins)) %>% 
+  mutate(clean_test = factor(clean_test, 
+                             levels = c("nowomen", "notalk", "men", "dubious", "ok")))
+ggplot(data = bechdel,
+       mapping = aes(x = five_year, fill = binary)) +
+  geom_bar()
+```
+
+*** =sample_code
+```{r}
+library(fivethirtyeight)
+library(ggplot2)
+
+```
+
+*** =solution
+```{r}
+library(fivethirtyeight)
+library(ggplot2)
+ggplot(data = bechdel,
+       mapping = aes(x = five_year, fill = binary)) +
+  geom_bar(position = "dodge")
+```
+
+*** =sct
+```{r}
+test_library_function("ggplot2")
+#test_ggplot(check_data = TRUE, check_aes = TRUE, check_geom = TRUE)
+test_or({
+  # match original solution
+  ggplot_fun <- ex() %>% check_function("ggplot")
+  ggplot_fun %>% check_arg("data") %>% check_equal(eval = FALSE)
+  ggplot_fun %>% check_arg("mapping")
+  aes_fun <- ex() %>% check_function("aes")
+  aes_fun %>% check_arg("x") %>% check_equal(eval = FALSE)
+  aes_fun %>% check_arg("fill") %>% check_equal(eval = FALSE)
+  geom_bar_fun <- ex() %>% check_function("geom_bar")
+  geom_bar_fun %>% check_arg("position") %>% check_equal()
+}, {
+  # match solution 1:
+  sol_code1 <- 'ggplot(data = bechdel,
+       mapping = aes(x = five_year)) +
+  geom_bar(position = "dodge", mapping = aes(fill = binary))'
+  alt_ex_1 <- ex() %>% override_solution(sol_code1)
+
+  ggplot_fun <- alt_ex_1 %>% check_function("ggplot")
+  ggplot_fun %>% check_arg("data") %>% check_equal(eval = FALSE)
+  ggplot_fun %>% check_arg("mapping")
+  aes_fun <- alt_ex_1 %>% check_function("aes")
+  aes_fun %>% check_arg("x") %>% check_equal(eval = FALSE)
+  geom_bar_fun <- alt_ex_1 %>% check_function("geom_bar")
+  geom_bar_fun %>% check_arg("position") %>% check_equal()
+  geom_bar_fun %>% check_arg("mapping")
+  alt_ex_1 %>% check_function("aes", index = 2) %>% check_arg("fill") %>% check_equal(eval = FALSE)
+})
+test_error()
+```
+
+--- type:NormalExercise lang:r xp:100 skills:1 key:29ba2e2bf8
+## Bechdel pass/fail over time (faceted)
+
+We can also create separate plots for `FAIL` and `PASS` using the concept of "small multiples." The plot from the previous exercise has been added here for reference.
+
+*** =instructions
+- Produce a faceted barplot showing the counts of the number of movies in each of the different `five_year` increments `fill`ed according to the levels of `binary`, but faceted based on the values of `binary` to create two different plots on top of each other.
+
+*** =hint
+- Barplots are created using `geom_bar` when we want to determine the total number in each category from a data set.
+- To change the colors of the bars based on another variable (say `var2`), include `fill = var2` inside of `aes`.  Note that `var2` is just a general variable and not one actually in `bechdel`.
+- Note that you shouldn't specify `position = "dodge"` here.
+- To facet, use the `facet_grid` function.  Check `?facet_grid` for assistance.
+
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+library(dplyr)
+library(ggplot2)
+data(bechdel)
+year_bins <- c("1970-'74", "1975-'79", "1980-'84", "1985-'89",
+               "1990-'94", "1995-'99", "2000-'04", "2005-'09",
+               "2010-'13")
+bechdel <- bechdel %>%
+  mutate(five_year = cut(year, 
+                         breaks = seq(1969, 2014, 5), 
+                         labels = year_bins)) %>% 
+  mutate(clean_test = factor(clean_test, 
+                             levels = c("nowomen", "notalk", "men", "dubious", "ok")))
+ggplot(data = bechdel,
+       mapping = aes(x = five_year, fill = binary)) +
+  geom_bar(position = "dodge")
+```
+
+*** =sample_code
+```{r}
+library(fivethirtyeight)
+library(ggplot2)
+
+```
+
+*** =solution
+```{r}
+library(fivethirtyeight)
+library(ggplot2)
+ggplot(data = bechdel,
+       mapping = aes(x = five_year, fill = binary)) +
+  geom_bar() +
+  facet_grid(binary ~ .)
+```
+
+*** =sct
+```{r}
+test_library_function("ggplot2")
+#test_ggplot(check_data = TRUE, check_aes = TRUE, check_geom = TRUE)
+test_or({
+  # match original solution
+  ggplot_fun <- ex() %>% check_function("ggplot")
+  ggplot_fun %>% check_arg("data") %>% check_equal(eval = FALSE)
+  ggplot_fun %>% check_arg("mapping")
+  aes_fun <- ex() %>% check_function("aes")
+  aes_fun %>% check_arg("x") %>% check_equal(eval = FALSE)
+  aes_fun %>% check_arg("fill") %>% check_equal(eval = FALSE)
+  ex() %>% check_function("geom_bar")
+  facet_grid_fun <- ex() %>% check_function("facet_grid")
+  facet_grid_fun %>% check_arg("facets") %>% check_equal(eval = FALSE)
+}, {
+  # match solution 1:
+  sol_code1 <- 'ggplot(data = bechdel,
+       mapping = aes(x = five_year)) +
+  geom_bar(aes(fill = binary)) +
+  facet_grid(binary ~ .)'
+  alt_ex_1 <- ex() %>% override_solution(sol_code1)
+
+  ggplot_fun <- alt_ex_1 %>% check_function("ggplot")
+  ggplot_fun %>% check_arg("data") %>% check_equal(eval = FALSE)
+  ggplot_fun %>% check_arg("mapping")
+  aes_fun <- alt_ex_1 %>% check_function("aes")
+  aes_fun %>% check_arg("x") %>% check_equal(eval = FALSE)
+  geom_bar_fun <- alt_ex_1 %>% check_function("geom_bar")
+  geom_bar_fun %>% check_arg("mapping")
+  alt_ex_1 %>% check_function("aes", index = 2) %>% check_arg("fill") %>% check_equal(eval = FALSE)
+  facet_grid_fun <- ex() %>% check_function("facet_grid")
+  facet_grid_fun %>% check_arg("facets") %>% check_equal(eval = FALSE)
+})
+test_error()
+```
+
+--- type:NormalExercise lang:r xp:100 skills:1 key:8ec4256aba
+## Bechdel pass/fail over time (proportional height)
+
+Each of the last three plots have the common problem that raw counts are shown instead of the proportion of `FAIL` versus `PASS` for each `five_year` increment.  While there are circumstances where raw counts make sense, this Bechdel test example leads us to want to explore the percentages of `FAIL` versus `PASS` instead.
+
+*** =instructions
+- Use `position = "fill"` as an argument to `geom_bar` to create a barplot in the spirit of **The Bechdel Test Over Time** image in the article ["The Dollar-And-Cents Case Against Hollywood’s Exclusion of Women"](https://fivethirtyeight.com/features/the-dollar-and-cents-case-against-hollywoods-exclusion-of-women/).
+
+*** =hint
+- Barplots are created using `geom_bar` when we want to determine the total number in each category from a data set.
+- To change the colors of the bars based on another variable (say `var2`), include `fill = var2` inside of `aes`.  Note that `var2` is just a general variable and not one actually in `bechdel`.
+
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+library(dplyr)
+library(ggplot2)
+data(bechdel)
+year_bins <- c("1970-'74", "1975-'79", "1980-'84", "1985-'89",
+               "1990-'94", "1995-'99", "2000-'04", "2005-'09",
+               "2010-'13")
+bechdel <- bechdel %>%
+  mutate(five_year = cut(year, 
+                         breaks = seq(1969, 2014, 5), 
+                         labels = year_bins)) %>% 
+  mutate(clean_test = factor(clean_test, 
+                             levels = c("nowomen", "notalk", "men", "dubious", "ok")))
+```
+
+*** =sample_code
+```{r}
+library(fivethirtyeight)
+library(ggplot2)
+
+```
+
+*** =solution
+```{r}
+library(fivethirtyeight)
+library(ggplot2)
+ggplot(data = bechdel,
+       mapping = aes(x = five_year, fill = binary)) +
+  geom_bar(position = "fill")
+```
+
+*** =sct
+```{r}
+test_library_function("ggplot2")
+#test_ggplot(check_data = TRUE, check_aes = TRUE, check_geom = TRUE)
+test_or({
+  # match original solution
+  ggplot_fun <- ex() %>% check_function("ggplot")
+  ggplot_fun %>% check_arg("data") %>% check_equal(eval = FALSE)
+  ggplot_fun %>% check_arg("mapping")
+  aes_fun <- ex() %>% check_function("aes")
+  aes_fun %>% check_arg("x") %>% check_equal(eval = FALSE)
+  aes_fun %>% check_arg("fill") %>% check_equal(eval = FALSE)
+  geom_bar_fun <- ex() %>% check_function("geom_bar")
+  geom_bar_fun %>% check_arg("position") %>% check_equal(eval = FALSE)
+}, {
+  # match solution 1:
+  sol_code1 <- 'ggplot(data = bechdel,
+       mapping = aes(x = five_year)) +
+  geom_bar(aes(fill = binary), position = "fill")'
+  alt_ex_1 <- ex() %>% override_solution(sol_code1)
+
+  ggplot_fun <- alt_ex_1 %>% check_function("ggplot")
+  ggplot_fun %>% check_arg("data") %>% check_equal(eval = FALSE)
+  ggplot_fun %>% check_arg("mapping")
+  aes_fun <- alt_ex_1 %>% check_function("aes")
+  aes_fun %>% check_arg("x") %>% check_equal(eval = FALSE)
+  geom_bar_fun <- ex() %>% check_function("geom_bar")
+  geom_bar_fun %>% check_arg("position") %>% check_equal(eval = FALSE)
+  alt_ex_1 %>% check_function("aes", index = 2) %>% check_arg("fill") %>% check_equal(eval = FALSE)
+})
+success_msg("Great work! <br><br>  THINK ABOUT IT:  What is clearer in observing this plot than the plots created in the previous three exercises?")
+test_error()
+```
+
+--- type:NormalExercise lang:r xp:100 skills:1 key:81c080dffd
+## Showing off
+
+We can actually produce a plot pretty close to the ["The Bechdel Test Over Time"](https://espnfivethirtyeight.files.wordpress.com/2014/04/hickey-bechdel-11.png?quality=90&strip=all&w=1150&ssl=1) plot by using `position = "fill"` and specifying the colors we'd like to use instead of the defaults including using `color` for the borders.  
+
+The default colors are shown in the plot already loaded for you.  As you write the code to create the plot, carefully pull apart how the different elements of the plot match with the Grammar of Graphics theory.
+
+We could continue to tweak the plot to make it look more and more like the actual published plot using nothing but `ggplot` code.  This is one of the great powers of R:  its customizability and portability make creating professional-style graphics interactive, fun, and REPRODUCIBLE!
+
+*** =instructions
+- After writing the code to produce the plot shown, add in the code given to color the bars appropriately.  (Remember to use the **R Console** as your sandbox for testing.)
+
+*** =hint
+- Barplots are created using `geom_bar` when we want to determine the total number in each category from a data set.
+- To change the colors of the bars based on another variable (say `var2`), include `fill = var2` inside of `aes`.  Note that `var2` is just a general variable and not one actually in `bechdel`.
+- We are using the `clean_test` variable here instead of `binary`.
+- Note the addition of the borders around the bars with `color`.
+
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+library(dplyr)
+library(ggplot2)
+data(bechdel)
+year_bins <- c("1970-'74", "1975-'79", "1980-'84", "1985-'89",
+               "1990-'94", "1995-'99", "2000-'04", "2005-'09",
+               "2010-'13")
+bechdel <- bechdel %>%
+  mutate(five_year = cut(year, 
+                         breaks = seq(1969, 2014, 5), 
+                         labels = year_bins)) %>% 
+  mutate(clean_test = factor(clean_test, 
+                             levels = c("nowomen", "notalk", "men", "dubious", "ok")))
+ggplot(data = bechdel, mapping = aes(x = five_year, fill = clean_test)) +
+  geom_bar(position = "fill", color = "white")
+```
+
+*** =sample_code
+```{r}
+library(fivethirtyeight)
+library(ggplot2)
+
+
+# Add these lines at the end of your ggplot code
+# These will color the bars in the same colors as the FiveThirtyEight plot
+# (Note the placement of the + here to be added on to your code.)
+                                    +
+  scale_fill_manual(values = c("#FF2603", "#FF937F", "#FEC9C3", "#6AB4DA", "#018ED5"))
+```
+
+*** =solution
+```{r}
+library(fivethirtyeight)
+library(ggplot2)
+ggplot(data = bechdel, mapping = aes(x = five_year, fill = clean_test)) +
+  geom_bar(position = "fill", color = "white") +
+  scale_fill_manual(values = c("#FF2603", "#FF937F", "#FEC9C3", "#6AB4DA", "#018ED5"))
+```
+
+*** =sct
+```{r}
+test_library_function("ggplot2")
+#test_ggplot(check_data = TRUE, check_aes = TRUE, check_geom = TRUE,
+#            check_extra = TRUE, exact_extra = TRUE)
+test_or({
+  # match original solution
+  ggplot_fun <- ex() %>% check_function("ggplot")
+  ggplot_fun %>% check_arg("data") %>% check_equal(eval = FALSE)
+  ggplot_fun %>% check_arg("mapping")
+  aes_fun <- ex() %>% check_function("aes")
+  aes_fun %>% check_arg("x") %>% check_equal(eval = FALSE)
+  aes_fun %>% check_arg("fill") %>% check_equal(eval = FALSE)
+  geom_bar_fun <- ex() %>% check_function("geom_bar")
+  geom_bar_fun %>% check_arg("position") %>% check_equal(eval = FALSE)
+  geom_bar_fun %>% check_arg("color") %>% check_equal(eval = FALSE)
+  scale_fill_manual_fun <- ex() %>% check_function("scale_fill_manual")
+  scale_fill_manual_fun %>% check_arg("values") %>% check_equal(eval = FALSE)
+}, {
+  # match solution 1:
+  sol_code1 <- 'ggplot(data = bechdel, mapping = aes(x = five_year)) +
+  geom_bar(mapping = aes(fill = clean_test), position = "fill", color = "white") +
+  scale_fill_manual(values = c("#FF2603", "#FF937F", "#FEC9C3", "#6AB4DA", "#018ED5"))'
+  alt_ex_1 <- ex() %>% override_solution(sol_code1)
+
+  ggplot_fun <- alt_ex_1 %>% check_function("ggplot")
+  ggplot_fun %>% check_arg("data") %>% check_equal(eval = FALSE)
+  ggplot_fun %>% check_arg("mapping")
+  aes_fun <- alt_ex_1 %>% check_function("aes")
+  aes_fun %>% check_arg("x") %>% check_equal(eval = FALSE)
+  geom_bar_fun <- alt_ex_1 %>% check_function("geom_bar")
+  geom_bar_fun %>% check_arg("position") %>% check_equal(eval = FALSE)
+  geom_bar_fun %>% check_arg("color") %>% check_equal(eval = FALSE)
+  geom_bar_fun %>% check_arg("mapping")
+  alt_ex_1 %>% check_function("aes", index = 2) %>% check_arg("fill") %>% check_equal(eval = FALSE)
+  scale_fill_manual_fun <- ex() %>% check_function("scale_fill_manual")
+  scale_fill_manual_fun %>% check_arg("values") %>% check_equal(eval = FALSE)
+})
+success_msg("Nicely done!  <br><br> THINK ABOUT IT: How does this plot improve on the other plots created throughout this chapter?")
+test_error()
+```

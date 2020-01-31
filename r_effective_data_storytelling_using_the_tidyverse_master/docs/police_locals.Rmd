@@ -1,0 +1,22 @@
+---
+title: "police_locals"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(DT)
+library(dplyr)
+library(fivethirtyeight)
+```
+
+```{r echo=FALSE}
+datatable(police_locals,
+  class = 'cell-border stripe',
+  rownames = FALSE,
+  filter = list(position = 'top'),
+  options = list(pageLength = nrow(police_locals), 
+    autoWidth = TRUE,
+    bInfo = FALSE,
+    paging = FALSE))
+```
+

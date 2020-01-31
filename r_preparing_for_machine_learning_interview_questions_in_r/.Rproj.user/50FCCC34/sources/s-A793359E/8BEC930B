@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1574876050238.000,
+    "dirty" : true,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3598375697",
+    "id" : "8BEC930B",
+    "lastKnownWriteTime" : 1574876683,
+    "last_content_update" : 1574876928935,
+    "path" : "C:/Users/frdanconia/Desktop/datacamp/Preparing for Machine Learning Interview Questions in R/Preparing for Machine Learning Interview Questions in R.R",
+    "project_path" : "Preparing for Machine Learning Interview Questions in R.R",
+    "properties" : {
+        "cursorPosition" : "36,0",
+        "scrollLine" : "22",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

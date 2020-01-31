@@ -1,0 +1,27 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1580439167340.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3978531308",
+    "id" : "C5E78F99",
+    "lastKnownWriteTime" : 1580439317,
+    "last_content_update" : 1580439318006,
+    "path" : "C:/Users/frdanconia/Desktop/intermediate_regular_expressions_in_r/chapter_1.Rmd",
+    "project_path" : "chapter_1.Rmd",
+    "properties" : {
+        "chunk_output_type" : "inline",
+        "cursorPosition" : "33,6",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

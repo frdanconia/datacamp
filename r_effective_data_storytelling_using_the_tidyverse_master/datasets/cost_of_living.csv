@@ -1,0 +1,52 @@
+state,index,col_group
+Mississippi,85.9,low
+Arkansas,87.1,low
+Michigan,89,low
+Oklahoma,89.2,low
+Tennessee,89.4,low
+Indiana,89.5,low
+Kansas,89.9,low
+Missouri,90.4,low
+Kentucky,90.5,low
+Texas,90.7,low
+Iowa,91,low
+Alabama,91.2,low
+Georgia,91.4,low
+Nebraska,91.6,low
+Wyoming,91.8,low
+Idaho,92.1,low
+Utah,93,low
+West Virginia,93.4,low
+Ohio,93.8,low
+North Carolina,93.9,low
+Illinois,94.6,low
+Louisiana,94.8,low
+New Mexico,96.5,mid
+Wisconsin,96.8,mid
+Arizona,98,mid
+Florida,98.3,mid
+South Carolina,99.2,mid
+North Dakota,99.4,mid
+Virginia,100.8,mid
+Minnesota,100.8,mid
+Montana,100.8,mid
+Delaware,101.4,mid
+Pennsylvania,101.4,mid
+Nevada,103.3,mid
+South Dakota,103.7,mid
+Colorado,103.8,mid
+Washington,105.2,high
+Maine,110.8,high
+Oregon,115.6,high
+New Hampshire,117,high
+Rhode Island,120.7,high
+Vermont,121.1,high
+New Jersey,121.9,high
+Maryland,125.5,high
+Connecticut,127.7,high
+New York,131,high
+Alaska,131.1,high
+Massachusetts,133.4,high
+California,135.9,high
+District of Columbia,151.6,high
+Hawaii,167.9,high

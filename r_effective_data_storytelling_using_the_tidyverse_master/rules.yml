@@ -1,0 +1,83 @@
+rules:
+    normal_exercise_num_chars_instructions:
+        min: 30
+        max: 2000
+    normal_exercise_num_items_instructions:
+        min: 0
+        max: 4
+    normal_exercise_num_chars_assignment:
+        min: 30
+        max: 2000
+    normal_exercise_num_subitems_instructions:
+        min: 0
+        max: 8
+    normal_exercise_num_chars_hints:
+        min: 0
+        max: 720
+    normal_exercise_num_items_hints:
+        min: 0
+        max: 4
+    normal_exercise_num_lines_code_sample:
+        min: 0
+        max: 30
+    normal_exercise_num_lines_code_solution:
+        min: 0
+        max: 30
+    normal_exercise_has_sct:
+        min: 0
+        max: 1
+    normal_exercise_has_sct_success_msg:
+        min: 0
+        max: 1
+    mce_num_chars_assignment:
+        min: 30
+        max: 600
+    mce_num_chars_options:
+        min: 10
+        max: 300
+    mce_num_items_options:
+        min: 3
+        max: 5
+    tab_exercise_num_chars_assignment:
+        min: 10
+        max: 780
+    tab_exercise_num_subex:
+        min: 2
+        max: 4
+    tab_normal_ex_num_chars_instructions:
+        min: 10
+        max: 240
+    bullet_exercise_num_chars_assignment:
+        min: 10
+        max: 600
+    bullet_exercise_num_subex:
+        min: 2
+        max: 4
+    bullet_normal_ex_num_chars_instructions:
+        min: 10
+        max: 120
+    course_num_chapters:
+        min: 1
+        max: 10
+    course_num_exercises:
+        min: 1
+        max: 120
+    chapter_num_exercises_chapter_1:
+        min: 1
+        max: 12
+    chapter_num_exercises_chapter_n:
+        min: 1
+        max: 16
+    course_pct_ex_instructions_lte_reco:
+        min: 0.05
+    course_pct_ex_assignment_lte_reco:
+        min: 0.05
+    course_pct_ex_hints_lte_reco:
+        min: 0.05
+    course_pct_ex_code_sample_lte_reco:
+        min: 0.05
+    course_pct_ex_code_solution_lte_reco:
+        min: 0.05
+    all_exercises_num_chars_title:
+        min: 5
+        max: 500

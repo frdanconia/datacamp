@@ -1,0 +1,36 @@
+---
+title: "Chapter 1"
+output: html_notebook
+---
+
+Starts with, ends with
+You've already seen how you can search for certain characters at the beginning of a string using the caret "^". Of course, regular expressions also offer a way to search for things at the end of a string. This is what the dollar sign "$" will do.
+
+When creating a pattern to look for something at the beginning of a line, use the caret followed by a search term "^___". When looking for something at the end, type the search term first and then append the dollar sign "___$". The order of appearance is very important when creating regular expressions.
+
+```{r}
+# Familiarize yourself with the vector by printing it
+movie_titles
+
+# List all movies that start with "The"
+movie_titles[str_detect(
+  movie_titles,
+  pattern = "^The"
+)]
+
+# List all movies that end with "3D"
+movie_titles[str_detect(
+  movie_titles,
+  pattern = "3D$"
+)]
+```
+
+If you don't know what you're looking for
+So far you've used str_detect() which returns TRUE if the pattern matches and FALSE otherwise. But regular expressions are also excellent at extracting the searched term from a larger amount of text. You can use the str_match() function for that.
+
+The next special character you'll get to know is the period: ".". The period matches any character, it's like a wild card. So if you search for example for "..." you will find three characters - be it letters or numbers or even white spaces.
+
+This is pretty handy, except if you need to search for an actual full stop ".". In that case: escape the period with two backslashes: "\\."
+```{r}
+
+```

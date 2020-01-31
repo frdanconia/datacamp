@@ -1,0 +1,461 @@
+---
+title       : Filtering, Grouping, & Summarizing
+description : Choose a subset of rows and summarize a data frame in total and across different levels of other variables using the dplyr package
+
+--- type:NormalExercise lang:r xp:100 skills:1,4 key:885a7aacb2
+## Fix incorrect code
+
+Recall the `US_births_2000_2014` data set in the `fivethirtyeight` package used in the 2016 article from FiveThirtyEight.com entitled "Some People Are Too Superstitious To Have A Baby On Friday The 13th" [here](https://fivethirtyeight.com/features/some-people-are-too-superstitious-to-have-a-baby-on-friday-the-13th/).  
+
+*** =instructions
+- Fix the code given to focus on only data corresponding to 2013 births using a function in the `dplyr` package.
+- Remember to load all needed packages.
+- Assign the name `US_births_2013` to this smaller data frame 
+- Note that `year` is a numeric variable so you shouldn't have quotation marks around the value(s) of `year` you specify.
+
+*** =hint
+- Use `==` to make comparisons.  Use `=` for assignment inside of `dplyr` functions.
+
+*** =pre_exercise_code
+```{r}
+
+```
+
+*** =sample_code
+```{r}
+library()
+library()
+US_births_2013 -> US_births_2000_2014 %>% 
+  filter(year = "2013")
+```
+
+*** =solution
+```{r}
+library(fivethirtyeight)
+library(dplyr)
+US_births_2013 <- US_births_2000_2014 %>% 
+  filter(year == 2013)
+```
+
+*** =sct
+```{r}
+test_library_function("fivethirtyeight")
+test_library_function("dplyr")
+test_object("US_births_2013")
+success_msg("Nicely done!")
+test_error()
+```
+
+--- type:NormalExercise lang:r xp:100 skills:1,4 key:04a7b0afce
+## Logical operators and the %in% operator
+
+Suppose we'd like to choose births data for the years 2012 to 2014.  The code given shows you many different ways to
+achieve this.  Copy each of them into the Console to check that they return the same data frames.
+
+- The `|` operator can be read as "or".  This should be used when you'd like either of the different
+operations to be true.  
+- The `%in%` operator can be used to match conditions provided in a vector using the `c()` function.
+- The `!` operator can be read as "not."  It is used to negate a condition.
+
+You can use a comma between arguments to specify you'd like all of the conditions to be met.  This is the same as using the
+"and" operator `&`.  Notice that `&` or `,` will not work here to select 2012 to 2014 since there are no values of `year` that
+are BOTH 2012 **and** 2013 at the same time. This is more useful when you have conditions to meet based on different variables.
+
+*** =instructions
+- Use the code given as a guide to choose births data for the years 2010, 2011, 2012, and 2014. (This resulting data frame
+should have 1461 rows.)
+- Assign the name `US_births_small` to this data frame.  (Note that there are many different ways
+to solve this.  I'm only asking you to produce ONE solution so you should delete the pre-loaded code when you understand how it works and then write your own answer.)
+
+*** =hint
+
+
+*** =pre_exercise_code
+```{r}
+
+```
+
+*** =sample_code
+```{r}
+library(fivethirtyeight)
+library(dplyr)
+
+# Check that each of these lines of code results in a data frame with the
+# correct number of rows (1096) by running the code in the Console
+US_births_2000_2014 %>% 
+  filter(year %in% 2012:2014)
+
+US_births_2000_2014 %>% 
+  filter(year %in% c(2012, 2013, 2014))
+  
+US_births_2000_2014 %>% 
+  filter(!(year %in% c(2000:2011, 2015)))
+
+US_births_2000_2014 %>% 
+  filter(year == 2012 | year == 2013 | year == 2014)
+```
+
+*** =solution
+```{r}
+library(fivethirtyeight)
+library(dplyr)
+US_births_small <- US_births_2000_2014 %>%
+    filter(year %in% c(2010:2012, 2014))
+```
+
+
+*** =sct
+```{r}
+test_library_function("fivethirtyeight")
+test_library_function("dplyr")
+test_object("US_births_small")
+success_msg("Nicely done!")
+test_error()
+```
+
+--- type:NormalExercise lang:r xp:100 skills:1,4 key:bac8392cbc
+## Matching conditions on multiple variables
+
+You can use a comma between arguments to specify you'd like all of the conditions to be met.  This is the same as using the
+"and" operator `&`.  Notice that `&` or `,` would not work to select 2012 to 2014 births data since there are no values of `year` that
+are BOTH 2012 **and** 2013 at the same time for a given row, for example. (Run `US_births_2000_2014 %>% filter(year == 2012, year == 2013, year == 2014)` in the Console to confirm that there are no resulting rows in this data frame.)  This is more useful when you have conditions to meet based on different variables.
+
+*** =instructions
+- Suppose we are interested in choosing rows for only weekdays (not Saturdays or Sundays) for `day_of_week` in `year` 2013.
+- Write the code to do so below and give the name `US_births_weekdays_2013` to the resulting data frame.  (Note that you may want to
+run `US_births_2000_2014 %>% distinct(day_of_week)` in the Console to identify the specific values of `day_of_week`.)
+
+*** =hint
+- Note the use of `!` with `%in% to choose all elements that DON'T match a condition.
+
+*** =pre_exercise_code
+```{r}
+
+```
+
+*** =sample_code
+```{r}
+library(fivethirtyeight)
+library(dplyr)
+
+
+```
+
+*** =solution
+```{r}
+library(fivethirtyeight)
+library(dplyr)
+US_births_weekdays_2013 <- US_births_2000_2014 %>% 
+  filter(year == 2013 & !(day_of_week %in% c("Sat", "Sun")))
+```
+
+
+*** =sct
+```{r}
+test_library_function("fivethirtyeight")
+test_library_function("dplyr")
+test_object("US_births_weekdays_2013")
+success_msg("Nicely done!")
+test_error()
+```
+
+--- type:NormalExercise lang:r xp:100 skills:1 key:3471dc69ec
+## Make plot on filtered data
+
+It's always important to review what you've learned in the past and apply it to new problems.  Let's step
+back into the `ggplot2` environment to plot some variables in the data frame we've just created.
+
+*** =instructions
+- Produce an appropriate plot looking at the pattern of `births` throughout weekdays in 2013 colored by
+the particular day of the week values.  `US_births_weekdays_2013` has been loaded for you so you don't need to
+create the data frame again.
+- Note that we don't need to load the `fivethirtyeight` or `dplyr` packages here since we aren't using functions
+or data frames inside them specifically with this problem.  We do need to load a different package though.
+
+*** =hint
+- There is only one value of `births` for each value of `date` and both of the variables are numerical.
+
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+library(dplyr)
+US_births_weekdays_2013 <- US_births_2000_2014 %>% 
+  filter(year == 2013 & !(day_of_week %in% c("Sat", "Sun")))
+```
+
+*** =sample_code
+```{r}
+library()
+
+
+```
+
+*** =solution
+```{r}
+library(ggplot2)
+ggplot(data = US_births_weekdays_2013, 
+        mapping = aes(x = date, y = births, color = day_of_week)) +
+    geom_line()
+```
+
+
+*** =sct
+```{r}
+test_library_function("ggplot2")
+test_or({
+  # match original solution
+  ggplot_fun <- ex() %>% check_function("ggplot")
+  ggplot_fun %>% check_arg("data") %>% check_equal(eval = FALSE)
+  ggplot_fun %>% check_arg("mapping")
+  aes_fun <- ex() %>% check_function("aes")
+  aes_fun %>% check_arg("x") %>% check_equal(eval = FALSE)
+  aes_fun %>% check_arg("y") %>% check_equal(eval = FALSE)
+  aes_fun %>% check_arg("color") %>% check_equal(eval = FALSE)
+  geom_line_fun <- ex() %>% check_function("geom_line")
+}, {
+  # match alternate solution:
+  sol_code1 <- 'ggplot(data = US_births_weekdays_2013, 
+        mapping = aes(x = date, y = births)) +
+    geom_line(aes(color = day_of_week))'
+  alt_ex_1 <- ex() %>% override_solution(sol_code1)
+
+  ggplot_fun <- alt_ex_1 %>% check_function("ggplot")
+  ggplot_fun %>% check_arg("data") %>% check_equal(eval = FALSE)
+  ggplot_fun %>% check_arg("mapping")
+  aes_fun <- alt_ex_1 %>% check_function("aes")
+  aes_fun %>% check_arg("x") %>% check_equal(eval = FALSE)
+  aes_fun %>% check_arg("y") %>% check_equal(eval = FALSE)
+  geom_line_fun <- alt_ex_1 %>% check_function("geom_line")
+  alt_ex_1 %>% check_function("aes", index = 2) %>% 
+    check_arg("color") %>% check_equal(eval = FALSE)
+})
+success_msg("Nice work!")
+test_error()
+```
+
+--- type:NormalExercise lang:r xp:100 skills:1,4 key:e52367fd4e
+## Overall mean and median
+
+The plot in the previous exercise has shown there are some outliers in the data for US births on weekdays in 2013.  Let's use the `summarize` function to get an idea for how these outliers may affect the shape of the `births` variable in
+`US_births_weekdays_2013`.
+
+*** =instructions
+- Fill in the code below to calculate the `mean` and `median` values for all weekday birth totals in 2013.
+- This *aggregated* data frame has been given a name of `birth_summ`.
+
+*** =hint
+- The function to calculate a mean of a variable is `mean` and the function to calculate a `median` of a
+variable is `median`.  The argument to both is the name of the variable with no quotes.
+
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+library(dplyr)
+US_births_weekdays_2013 <- US_births_2000_2014 %>% 
+  filter(year == 2013 & !(day_of_week %in% c("Sat", "Sun")))
+```
+
+*** =sample_code
+```{r}
+library(dplyr)
+birth_summ <- US_births_weekdays_2013 %>% 
+  summarize(mean_births =  (),
+            median_births = ())
+```
+
+*** =solution
+```{r}
+library(dplyr)
+birth_summ <- US_births_weekdays_2013 %>% 
+  summarize(mean_births = mean(births),
+            median_births = median(births))
+```
+
+
+*** =sct
+```{r}
+test_library_function("dplyr")
+test_object("birth_summ")
+success_msg("Nicely done!")
+test_error()
+```
+
+--- type:NormalExercise lang:r xp:100 skills:1,4 key:66f450f2cf
+## Summarizing over another variable
+
+Instead of looking at the overall mean and median across all of 2013 weekdays, we can calculate the
+mean and median for each of the five different weekdays throughout 2013.
+
+*** =instructions
+- Fill in the code below to calculate the `mean` and `median` values across the different categories of
+`day_of_week` for the `US_births_weekdays_2013` data frame.
+- Use the same names for the columns as in the `birth_summ` data frame in the previous exercise.
+- After writing the code, make sure to output the resulting `birth_day_summ` data frame to check its values.
+
+*** =hint
+
+
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+library(dplyr)
+US_births_weekdays_2013 <- US_births_2000_2014 %>% 
+  filter(year == 2013 & !(day_of_week %in% c("Sat", "Sun")))
+```
+
+*** =sample_code
+```{r}
+library(dplyr)
+birth_day_summ <- US_births_weekdays_2013 %>%
+  group_by() %>%
+  summarize( =  (),
+             = ())
+birth_day_summ
+```
+
+*** =solution
+```{r}
+library(dplyr)
+birth_day_summ <- US_births_weekdays_2013 %>% 
+  group_by(day_of_week) %>%
+  summarize(mean_births = mean(births),
+            median_births = median(births))
+birth_day_summ
+```
+
+
+*** =sct
+```{r}
+test_library_function("dplyr")
+test_object("birth_day_summ")
+success_msg("Nicely done! <br><br> THINK ABOUT IT:  Why might Tuesday have the highest mean and median number of
+births throughout the year? <br><br> Why might the median number of births be higher than the mean for all days
+except Friday?")
+test_error()
+```
+
+--- type:NormalExercise lang:r xp:100 skills:1 key:b869123105
+## Using the geom_col function
+
+With aggregated data like that in the `birth_day_summ` data frame created in the last exercise, we can use the `geom_col` function to produce the barplot shown.
+
+*** =instructions
+- Write the code to produce this plot.  The `birth_day_summ` aggregated data frame has been loaded for you.  Yes,
+that is "goldenrod".
+
+*** =hint
+
+
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+library(dplyr)
+library(ggplot2)
+US_births_weekdays_2013 <- US_births_2000_2014 %>% 
+  filter(year == 2013 & !(day_of_week %in% c("Sat", "Sun")))
+birth_day_summ <- US_births_weekdays_2013 %>% 
+  group_by(day_of_week) %>%
+  summarize(mean_births = mean(births),
+            median_births = median(births))
+ggplot(data = birth_day_summ, mapping = aes(x = day_of_week, y = median_births)) +
+    geom_col(fill = "goldenrod")            
+```
+
+*** =sample_code
+```{r}
+library()
+
+```
+
+*** =solution
+```{r}
+library(ggplot2)
+ggplot(data = birth_day_summ, mapping = aes(x = day_of_week, y = median_births)) +
+    geom_col(fill = "goldenrod")
+```
+
+
+*** =sct
+```{r}
+test_library_function("ggplot2")
+ggplot_fun <- ex() %>% check_function("ggplot")
+ggplot_fun %>% check_arg("data") %>% check_equal(eval = FALSE)
+ggplot_fun %>% check_arg("mapping")
+aes_fun <- ex() %>% check_function("aes")
+aes_fun %>% check_arg("x") %>% check_equal(eval = FALSE)
+aes_fun %>% check_arg("y") %>% check_equal(eval = FALSE)
+geom_col_fun <- ex() %>% check_function("geom_col")
+geom_col_fun %>% check_arg("fill") %>% check_equal(eval = FALSE)
+success_msg("Great work!")
+test_error()
+```
+
+--- type:NormalExercise lang:r xp:100 skills:1,4 key:755d91471c
+## Grouping by multiple variables
+
+One great feature of the `group_by` function is its ability to group by more than one variable to show what the
+aggregated data looks like for combinations of the different variables across the response variable.  All that
+you need to do is add a comma between the different variables in `group_by`. (For example, `group_by(var1, var2)` where
+`var1` and `var2` are generic variable names.  You'll need to specify the actual variable names for your data frame
+of interest.)
+
+Another useful tool to calculate the proportion of an occurrence is by invoking the `mean()` function.  Suppose
+we want to count the proportion of "heads" in five tosses of a fair coin.  These five tosses result in
+
+`tosses <- c("heads", "tails", "tails", "heads", "heads")`
+
+We can use `mean(tosses == "heads")` to get the resulting answer of 0.6.  This works since R converts `tosses == "heads"`
+into a logical variable.  Then when the `mean` function is invoked it sums across the three `TRUE` values that were
+created and then divides by the five total entries to get the number of 0.6.
+
+Recall the `flying` data frame in the `fivethirtyeight` package you used in the **ggplot2 Review** chapter and its corresponding
+2014 article on FiveThirtyEight.com [here](https://fivethirtyeight.com/datalab/airplane-etiquette-recline-seat/).
+
+*** =instructions
+- You've been provided with code to get you started here on using only the complete entries of `flying` 
+and you are asked to continue with the piping using `group_by` and `summarize` to produce the correct aggregated data frame.
+- Give a name of `two_group_prop` to this data frame.
+- Write the code to determine the proportion of respondents in the survey that responded with `"Very"` when asked if a
+passenger reclining their seat was rude.  You should determine this proportion across the different levels of `age` and `gender`
+resulting in a data frame of size `8 x 3`.  (Note that, unfortunately, only `"Male"` and `"Female"` were given as options
+on this survey for `gender`.)
+- Assign the name `prop_very` to this calculated proportion in this aggregated data frame.
+- Make sure to print `two_group_prop` to answer the **THINK ABOUT IT** questions that follow.
+
+*** =hint
+
+
+*** =pre_exercise_code
+```{r}
+          
+```
+
+*** =sample_code
+```{r}
+library(fivethirtyeight)
+library(dplyr)
+two_group_prop <- flying %>% 
+                  na.omit() %>% 
+
+```
+
+*** =solution
+```{r}
+library(fivethirtyeight)
+library(dplyr)
+two_group_prop <- flying %>% 
+    na.omit() %>% 
+    group_by(age, gender) %>% 
+    summarize(prop_very = mean(recline_rude == "Very"))
+```
+
+
+*** =sct
+```{r}
+test_library_function("fivethirtyeight")
+test_library_function("dplyr")
+test_object("two_group_prop")
+success_msg("Great work! <br><br> THINK ABOUT IT:  What stands out to you as you review these proportions? <br><br>
+What age ranges and gender pairings have the highest and lowest proportions of thinking reclining airline seats are rude in this survey?")
+test_error()
+```

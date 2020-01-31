@@ -1,0 +1,212 @@
+---
+title       : Applying R Basics
+description : Exploring the basics of R on a data set based on the fivethirtyeight.com "Most Police Don’t Live In The Cities They Serve" article.
+
+
+--- type:NormalExercise lang:r xp:100 skills:1 key:c306f947db
+## Investigate the properties of a data frame
+
+Read over the 2014 article from FiveThirtyEight.com entitled "Most Police Don’t Live In The Cities They Serve" [here](http://fivethirtyeight.com/datalab/most-police-dont-live-in-the-cities-they-serve/).   Police and their relationships with citizens has been a controversial topic for many years and has come to the forefront of American culture since the events of Ferguson, Missouri mentioned in this article.
+
+The dataset corresponding to this article from the `fivethirtyeight` package has been loaded as a data frame with name `police_locals` and is available in the workspace.  You can view the `police_locals` data frame as an interactive table [here](https://ismayc.github.io/Effective-Data-Storytelling-using-the-tidyverse/police_locals.html).
+
+To work with functions and/or data stored in an R package, we need to first load the package using the `library` function.  This is done for you with both the `tibble` package and the `fivethirtyeight` package.  The `data` function loads the specified data set (passed as an argument to `data`) into the environment.
+
+Remember to use the R Console as your sandbox for checking that your R commands do what you suspect them to do.  When you are confident with your answer, enter it into **script.R** and press Submit Answer.  You can **Take Hint** but you should rarely be using this feature as you'll find you will better learn the material if you struggle with the problems some.
+
+*** =instructions
+- Get the names of the columns/variables in `police_locals` using the `names` function.
+- Check out the properties of `police_locals` using the `glimpse` function in the `tibble` package.  (This function acts much like the `str` function, but has some nicer features.)
+
+*** =hint
+- Use `names()`.  Note that what goes inside the `()` is the name of the data frame you'd like to examine the properties of.
+- Use `glimpse()`.  Note that what goes inside the `()` is the name of the data frame you'd like to examine the properties of.
+- Note that you should NOT put the name of the data frame in quotation marks.  Use `?names` and/or `?tibble::glimpse` for more information.
+
+*** =pre_exercise_code
+```{r}
+library(tibble)
+library(fivethirtyeight)
+data(police_locals)
+#library(readr)
+#police_locals <- read_csv("https://raw.githubusercontent.com/ismayc/Effective-Data-Storytelling-using-the-tidyverse/master/datasets/police_locals.csv")
+```
+
+*** =sample_code
+```{r}
+library(tibble)
+library(fivethirtyeight)
+data(police_locals)
+# police_locals is available in your workspace
+# Identify the names of the columns in police_locals
+
+# Check out the properties of police_locals
+
+```
+
+*** =solution
+```{r}
+library(tibble)
+library(fivethirtyeight)
+data(police_locals)
+# police_locals is available in your workspace
+# Identify the names of the columns in police_locals
+names(police_locals)
+# Check out the properties of police_locals
+glimpse(police_locals)
+```
+
+*** =sct
+```{r}
+# SCT written with testwhat: https://github.com/datacamp/testwhat/wiki
+test_function("names", args = "x",
+              not_called_msg = "You didn't call `names()`!",
+              incorrect_msg = "You didn't call `names(x = ...)` with the correct argument, `x`.")
+
+test_function("glimpse", args = "x",
+              not_called_msg = "You didn't call `glimpse()`!",
+              incorrect_msg = "You didn't call `glimpse(x = ...)` with the correct argument, `x`.")
+
+test_error()
+
+success_msg("Good work! <br><br> THINK ABOUT IT:  Why are the variables in `police_locals` the specific `class` they are coded as here (`chr`, `int`, `dbl`)?")
+```
+
+--- type:MultipleChoiceExercise lang:r xp:50 skills:1 key:792856c06f
+## Identify observational unit
+
+What is the observational unit in this `police_locals` data frame?  You can view the `police_locals` data frame as an interactive table [here](https://ismayc.github.io/Effective-Data-Storytelling-using-the-tidyverse/police_locals.html).
+
+*** =instructions
+- Percentage of officers
+- City
+- Police force
+- Race
+
+*** =hint
+What is the thing being measured along each row?  Remember that variables (unless they are identification variables) cannot be the same
+as the *observational unit*.
+
+*** =pre_exercise_code
+```{r}
+# You can also prepare your dataset in a specific way in the pre exercise code
+library(fivethirtyeight)
+data(police_locals)
+library(tibble)
+```
+
+*** =sct
+```{r}
+# SCT written with testwhat: https://github.com/datacamp/testwhat/wiki
+
+msg_bad <- "That is not correct!"
+msg_success <- "Exactly! The observational unit here is city.  Percentage of officers, police force, and race are all variables/characteristics about the city."
+test_mc(correct = 2, feedback_msgs = c(msg_bad, msg_success, msg_bad, msg_bad))
+```
+
+--- type:NormalExercise lang:r xp:100 skills:1 key:a713e275ff
+## Create a vector
+
+One of the cool features of R is that works quickly and easily with vectors.  Test your knowledge from the Introduction to R DataCamp course
+by determining the vector specified below.
+
+*** =instructions
+
+- Create a new vector called `all_not` that calculates the percentage of the total police force that **DO NOT** live in the city.  Note that `all_not` should not be included in the `police_locals` data frame but instead live as a vector by itself.
+- You can get information on what each of the different variables in `police_locals` represents by entering `?police_locals` in the **R Console** or by going [here](https://rdrr.io/cran/fivethirtyeight/man/police_locals.html).
+- NOTE: The best way to extract a vector from a data frame is to use `$`.
+
+
+*** =hint
+- Remember that you can add or subtract a value from all elements of a vector using something like `vec2 <- 2 + df$vec1` where `vec1` is a vector
+in the `df` data frame.
+- The total police force is stored in the vector `all` in `police_locals`.
+- Use the assignment operator `<-` to give a name to an object (such as a vector).
+
+
+*** =pre_exercise_code
+```{r}
+library(tibble)
+library(fivethirtyeight)
+data(police_locals)
+```
+
+*** =solution
+```{r}
+all_not <- 1 - police_locals$all
+```
+
+*** =sct
+```{r}
+test_object("all_not")
+test_error()
+```
+
+
+
+--- type:NormalExercise lang:r xp:50 skills:1 key:d4dc193a51
+## Subset and index a vector
+
+Use `[ ]` to extract specific information about a variable in the `police_locals` data frame.
+
+*** =instructions
+- Extract the first, seventh, sixty-sixth, and seventy-third city names from the data set in **one** R command.
+- Assign `sub_cities` as the name to this object
+
+*** =hint
+- Remember the `c` function is used to provide a vector of values separated by columns.
+- Note that it is only asking for entries in the `city` variable, not any other variables.
+- Recall to extract a vector from a data frame, we use `$`.
+
+*** =pre_exercise_code
+```{r}
+library(tibble)
+library(fivethirtyeight)
+data(police_locals)
+```
+
+*** =solution
+```{r}
+sub_cities <- police_locals$city[c(1, 7, 66, 73)]
+```
+
+
+*** =sct
+```{r}
+test_object("sub_cities")
+test_error()
+```
+
+
+--- type:NormalExercise lang:r xp:100 skills:1 key:bd0f6596e5
+## Subset and index a vector again.
+
+In R, an index refers to the specific entry in an object.  As an example, in a vector called `my_vec` defined as
+`my_vec <- c(200, 243, 78)`, index 1 corresponds to 200, index 2 corresponds to 243, and index 3 corresponds to 78.
+
+*** =instructions
+Extract the police size forces corresponding to indices 14 to 39 in `police_locals` and assign the `pol_force` name to this subset.
+
+*** =hint
+- Remember police size forces are giving in the `police_size_force` vector.
+- The `:` operator can be used to specify a range of values.  You can look for help on this by entering `?` `` `:` `` in the R Console.
+- You don't have to use `c` with `:`.  For example, `my_vec2 <- my_vec[c(1:2)]` sends the first two indexed values of `my_vec` to an object with the name `my_vec2`, but `my_vec2 <- my_vec[1:2]` also works and is preferred.
+
+*** =pre_exercise_code
+```{r}
+library(tibble)
+library(fivethirtyeight)
+data(police_locals)
+```
+
+*** =solution
+```{r}
+pol_force <- police_locals$force_size[14:39]
+```
+
+
+*** =sct
+```{r}
+test_object("pol_force")
+test_error()
+```

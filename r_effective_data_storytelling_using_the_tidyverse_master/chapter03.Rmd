@@ -1,0 +1,268 @@
+---
+title       : Scatter-plots & Line-graphs
+description : Create and analyze different plots relating two numerical variables via the ggplot2 package using datasets in and derived from the fivethirtyeight R package
+
+--- type:NormalExercise lang:r xp:100 skills:1 key:bl30sh3qn6
+## Relationship between numerical variables
+
+Suppose we are interested in analyzing the relationship between `all` and `index` in the
+`police_join_cost` data frame.
+
+*** =instructions
+- What types of variables are `all` and `index`?  Use the `glimpse` function in the `tibble` package to find out what type they and all of the other variables in `police_join_cost` are.
+- Plot `index` on the horizontal axis and `all` on the vertical axis in an appropriate plot.
+
+*** =hint
+- The horizontal axis is the `x` axis and the vertical axis is the `y` axis.
+- Remember that we use the `aes` function to map aesthetics.  Also be sure there are two `))` before the `+`:  one for the `ggplot` call and one for the `aes` call.
+- Recall that `glimpse` expects only the name of a data frame as its argument, not variables.
+
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+data(police_locals)
+library(readr)
+library(dplyr)
+ideology <- read_csv("http://s3.amazonaws.com/assets.datacamp.com/production/course_3085/datasets/ideology.csv")
+police_join <- inner_join(x = police_locals, y = ideology, by = "city")
+cost_of_living <- read_csv("http://s3.amazonaws.com/assets.datacamp.com/production/course_3085/datasets/cost_of_living.csv")
+police_join_cost <- inner_join(x = police_join, y = cost_of_living, by = "state")
+```
+
+*** =sample_code
+```{r}
+# Find out what types of variables `all` and `index` are.
+
+
+# Produce an appropriate plot by filling in the entries correctly
+library(ggplot2)
+ggplot(data = ,
+       mapping = aes(x = ,
+           y = )) +
+  geom_   ()
+```
+
+*** =solution
+```{r}
+# Find what types of variables `all` and `index` are.
+library(tibble)
+glimpse(police_join_cost)
+# Produce an appropriate plot by filling in the entries correctly below
+library(ggplot2)
+ggplot(data = police_join_cost,
+       mapping = aes(x = index,
+           y = all)) +
+  geom_point()
+```
+
+*** =sct
+```{r}
+test_library_function("tibble")
+test_library_function("ggplot2")
+test_function("glimpse", args = "x")
+test_ggplot(check_data = TRUE, check_aes = TRUE, check_geom = TRUE)
+success_msg("Good work! <br><br> THINK ABOUT IT:  After looking over the plot, is it the type of relationship you expected (negative, positive, not much at all, etc.)?")
+test_error()
+```
+
+
+--- type:NormalExercise lang:r xp:100 skills:1 key:ujio5pauwu
+## Adding another variable
+
+Let's further look into the relationship between `all` and `index` in
+`police_join_cost`.  We also added the `state_ideology` variable with values of `"Conservative"` and `"Liberal"` using `inner_join` in a previous exercise.  Let's color
+the points in the plot based on whether or not the city selected falls in a state labeled as `"Conservative"` or `"Liberal"`.
+
+*** =instructions
+- Plot `index` on the horizontal axis and `all` on the vertical axis in an appropriate plot.
+- Add `color` to the points based on values of `state_ideology`.
+- Remember to add a call to `library` to include the specific package needed for graphics.
+
+*** =hint
+- The horizontal axis is the `x` axis and the vertical axis is the `y` axis.
+- Remember that we also need to map aesthetics to the data using `aes`.  This is true for `x` and `y` and also for `color`.
+- By default, `na.rm` is set to `FALSE` by default with `geom_point`.  You can specify it if you wish as an argument to `geom_point()` as `na.rm = FALSE` but you don't have to.
+
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+data(police_locals)
+library(readr)
+library(dplyr)
+ideology <- read_csv("http://s3.amazonaws.com/assets.datacamp.com/production/course_3085/datasets/ideology.csv")
+police_join <- inner_join(x = police_locals, y = ideology, by = "city")
+cost_of_living <- read_csv("http://s3.amazonaws.com/assets.datacamp.com/production/course_3085/datasets/cost_of_living.csv")
+police_join_cost <- inner_join(x = police_join, y = cost_of_living, by = "state")
+```
+
+*** =sample_code
+```{r}
+# Produce an appropriate plot looking at the relationship between
+# `index` and `all` colored based on the values of `state_ideology`
+# filling in the entries correctly below
+
+ggplot(data = ,
+       mapping = aes(x = ,
+           y = )) +
+  geom_point(aes(color = ))
+```
+
+*** =solution
+```{r}
+# Produce an appropriate plot by filling in the entries correctly
+library(ggplot2)
+ggplot(data = police_join_cost,
+       mapping = aes(x = index,
+           y = all)) +
+  geom_point(aes(color = state_ideology))
+```
+
+*** =sct
+```{r}
+test_library_function("ggplot2")
+test_or({
+  # match original solution
+  ggplot_fun <- ex() %>% check_function("ggplot")
+  ggplot_fun %>% check_arg("data") %>% check_equal(eval = FALSE)
+  ggplot_fun %>% check_arg("mapping")
+  aes_fun <- ex() %>% check_function("aes")
+  aes_fun %>% check_arg("x") %>% check_equal(eval = FALSE)
+  aes_fun %>% check_arg("y") %>% check_equal(eval = FALSE)
+  geom_point_fun <- ex() %>% check_function("geom_point")
+  geom_point_fun %>% check_arg("mapping")
+  ex() %>% check_function("aes", index = 2) %>% check_arg("color") %>% check_equal(eval = FALSE)
+}, {
+  # match alt solution:
+  sol_alt_code <- 'ggplot(data = police_join_cost, mapping = aes(x = index, y = all, color = state_ideology)) + geom_point()'
+  alt_ex <- ex() %>% override_solution(sol_alt_code)
+
+  ggplot_fun <- alt_ex %>% check_function("ggplot")
+  ggplot_fun %>% check_arg("data") %>% check_equal(eval = FALSE)
+  ggplot_fun %>% check_arg("mapping")
+  aes_fun <- alt_ex %>% check_function("aes")
+  aes_fun %>% check_arg("x") %>% check_equal(eval = FALSE)
+  aes_fun %>% check_arg("y") %>% check_equal(eval = FALSE)
+  aes_fun %>% check_arg("color") %>% check_equal(eval = FALSE)
+  alt_ex %>% check_function("geom_point")
+})
+success_msg("Nice! <br><br> THINK ABOUT IT:  What stands out to you as you look over this plot?  How does adding the
+`state_ideology` help you better understand the relationships between the variables?")
+test_error()
+```
+
+--- type:NormalExercise lang:r xp:100 skills:1 key:mhza74qwhy
+## Babies born over time (line-graph)
+
+Read over the 2016 article from FiveThirtyEight.com entitled "Some People Are Too Superstitious To Have A Baby On Friday The 13th" [here](https://fivethirtyeight.com/features/some-people-are-too-superstitious-to-have-a-baby-on-friday-the-13th/).  The article explores how many fewer babies are born on Friday the 13th's compared to Friday the 6th's or Friday the 20th's.  
+
+We'll look at more general relationships than this focusing on babies born in the US in 2014 by day. This data is stored
+in the `US_births_2000_2014` data frame in the `fivethirtyeight` package.  In order to isolate only
+on the 2014 births, we could use the `subset` function but we prefer to use the `filter` function in the `dplyr` package and the `%>%` (pipe) operator that you'll explore more later in the course.  You can view the resulting `US_births_2014` data frame interactively [here](https://ismayc.github.io/Effective-Data-Storytelling-using-the-tidyverse/US_births_2014.html).
+
+*** =instructions
+- Plot `births` on the vertical axis and `date` on the horizontal axis using a line for the geometry.
+
+*** =hint
+- The horizontal axis is the `x` axis and the vertical axis is the `y` axis.
+- Remember that we also need to map aesthetics to the data using the `aes` function.
+
+*** =pre_exercise_code
+```{r}
+library(fivethirtyeight)
+data(US_births_2000_2014)
+```
+
+*** =sample_code
+```{r}
+library(dplyr)
+library()
+US_births_2014 <- US_births_2000_2014 %>% filter(year == 2014)
+
+```
+
+*** =solution
+```{r}
+library(dplyr)
+library(ggplot2)
+US_births_2014 <- US_births_2000_2014 %>% filter(year == 2014)
+ggplot(data = US_births_2014,
+       mapping = aes(x = date,
+           y = births)) +
+  geom_line()
+```
+
+*** =sct
+```{r}
+test_library_function("ggplot2")
+test_ggplot(check_data = TRUE, check_aes = TRUE, check_geom = TRUE)
+success_msg("Nice! <br><br> THINK ABOUT IT:  This isn't a very pretty (or useful) plot to look at. Why is there so much 'up-and-down' in the plot?  Additionally, what makes this plot hard to understand?")
+test_error()
+```
+
+--- type:NormalExercise lang:r xp:100 skills:1 key:v9lwv5gk0y
+## Babies born over time (scatter-plot)
+
+Recall that the line-graph in the last exercise had some strange features to it.  Let's explore what the points themselves look like and then color the points based on another variable in the second plot.  The `US_births_2014` data frame has been loaded for you already.
+
+*** =instructions
+- Plot `births` on the vertical axis and `date` on the horizontal axis using a point for the geometry.  Then color the points based on `day_of_week`.  (You might want to enter your code into the Console first to plot without color and then add the color later after you have that working.)
+
+*** =hint
+- The horizontal axis is the `x` axis and the vertical axis is the `y` axis.
+- Remember that we also need to map aesthetics to the data using the `aes` function.
+
+*** =pre_exercise_code
+```{r}
+library(dplyr)
+library(fivethirtyeight)
+data(US_births_2000_2014)
+US_births_2014 <- US_births_2000_2014 %>% filter(year == 2014)
+```
+
+*** =sample_code
+```{r}
+
+
+```
+
+*** =solution
+```{r}
+# Produce an appropriate plot by filling in the entries correctly
+library(ggplot2)
+ggplot(data = US_births_2014,
+       mapping = aes(x = date,
+           y = births)) +
+  geom_point(aes(color = day_of_week))  
+```
+
+*** =sct
+```{r}
+test_library_function("ggplot2")
+test_or({
+  # match original solution
+  ggplot_fun <- ex() %>% check_function("ggplot")
+  ggplot_fun %>% check_arg("data") %>% check_equal(eval = FALSE)
+  ggplot_fun %>% check_arg("mapping")
+  aes_fun <- ex() %>% check_function("aes")
+  aes_fun %>% check_arg("x") %>% check_equal(eval = FALSE)
+  aes_fun %>% check_arg("y") %>% check_equal(eval = FALSE)
+  geom_point_fun <- ex() %>% check_function("geom_point")
+  geom_point_fun %>% check_arg("mapping")
+  ex() %>% check_function("aes", index = 2) %>% check_arg("color") %>% check_equal(eval = FALSE)
+}, {
+  # match alt solution:
+  sol_alt_code <- 'ggplot(data = US_births_2014, mapping = aes(x = date, y = births, color = day_of_week)) + geom_point()'
+  alt_ex <- ex() %>% override_solution(sol_alt_code)
+
+  ggplot_fun <- alt_ex %>% check_function("ggplot")
+  ggplot_fun %>% check_arg("data") %>% check_equal(eval = FALSE)
+  ggplot_fun %>% check_arg("mapping")
+  aes_fun <- alt_ex %>% check_function("aes")
+  aes_fun %>% check_arg("x") %>% check_equal(eval = FALSE)
+  aes_fun %>% check_arg("y") %>% check_equal(eval = FALSE)
+  aes_fun %>% check_arg("color") %>% check_equal(eval = FALSE)
+  alt_ex %>% check_function("geom_point")
+})
+success_msg("Great work!  <br><br> THINK ABOUT IT: Now that you've produced this scatter-plot, why were the lines going up and down across the plot? <br><br> How does this coloring help to understand the distribution of births across the year?  Can you identify the points that don't follow the patterns and what days they correspond to?")  
+test_error()
+```

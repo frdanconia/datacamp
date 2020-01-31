@@ -1,0 +1,23 @@
+---
+title: "US_births_2014"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(DT)
+library(dplyr)
+library(fivethirtyeight)
+```
+
+```{r echo=FALSE}
+US_births_2014 <- US_births_2000_2014 %>% filter(year == 2014)
+datatable(US_births_2014,
+  class = 'cell-border stripe',
+  rownames = FALSE,
+  filter = list(position = 'top'),
+  options = list(pageLength = nrow(US_births_2014), 
+    autoWidth = TRUE,
+    bInfo = FALSE,
+    paging = FALSE))
+```
+
