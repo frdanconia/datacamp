@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1580563927488.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2665342166",
+    "id" : "441AF8E2",
+    "lastKnownWriteTime" : 1580563469,
+    "last_content_update" : 1580563469,
+    "path" : "C:/Users/frdanconia/Desktop/forecasting_using_R/Chapter_1_Exploring_and_Visualising_Time_Series_in_R.Rmd",
+    "project_path" : "Chapter_1_Exploring_and_Visualising_Time_Series_in_R.Rmd",
+    "properties" : {
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

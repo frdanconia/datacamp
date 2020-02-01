@@ -1,0 +1,381 @@
+---
+title: "Multiple and Logistic Regression"
+author: "Amit Agni"
+date: "11/03/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(pacman)
+p_load(tidyverse,broom,here,data.table,plotly)
+```
+
+
+### Chapter 1 : Parallel slopes
+
+* Models with one numerical and one categorical variable
+* Same slope but different intercepts arising due to the categorical variables
+* **Important to convert the categorical variable to factor**
+
+
+```{r}
+
+model <- lm(mpg ~ wt + factor(cyl), data = mtcars)
+model
+
+summary(model)
+```
+
+
+**Visualising after `broom::augment()`**
+
+>The `augment()` function from the broom package provides an easy way to add the fitted values to our data frame
+
+
+* Model Intepretation
+    + `mpg` would be 33.99 if the `wt` of the car was 0 and car had no `cyl`
+    + `mpg` would change by -3.206 for a unit change in wt, after controlling for `cyl`
+    + Cars with 6 `cyl` give -4.256 less `mpg` and cars with 8 `cyl` give -6.071 less `mpg` keeping `wt` constant
+    
+
+
+```{r}
+
+
+# Augment the model
+augmented_mod <- augment(model)
+glimpse(augmented_mod)
+
+# scatterplot, with color
+data_space <- ggplot(augmented_mod, aes(x = wt, y = mpg, color = factor.cyl.)) + 
+  geom_point()
+  
+# single call to geom_line()
+data_space + 
+  geom_line(aes(y = .fitted))
+
+model
+```
+
+
+### Chapter 2 : Evaluating and extending parallel slopes model
+
+**R-squared vs. adjusted R-squared**
+
+Two common measures of how well a model fits to data are $R^2$ (the coefficient of determination) and the adjusted $R^2$.
+The former measures the percentage of the variability in the response variable that is explained by the model. To compute this, we define
+$R^2 = 1 - \frac{SSE}{SST}$
+
+where $SSE$ are the sum of the squared residuals
+and $SST$ is the total sum of the squares
+
+One issue with this measure is that the SSE can only decrease as new variable are added to the model, while the SST depends only on the response variable and therefore is not affected by changes to the model. This means that you can increase $R^2$ by adding any additional variable to your model—even random noise.
+
+The adjusted $R^2$ includes a term that penalizes a model for each additional explanatory variable (where p is the number of explanatory variables).
+
+$R^2_{adj} = 1 - \frac{SSE}{SST} \cdot \frac{n-1}{n-p-1}$
+
+**Interaction**
+
+* All models need not have parallel slopes
+* Original slope of -3.61 miles per gallon is now separated into two slopes
+    + -3.77 for older cars
+    + 3.445 for newer cars
+
+>Interaction models are easy to visualize in the data space with ggplot2 because they have the same coefficients as if the models were fit independently to each group defined by the level of the categorical variable. In this case, new and used MarioKarts each get their own regression line. To see this, we can set an aesthetic (e.g. color) to the categorical variable, and then add a geom_smooth() layer to overlay the regression line for each color.
+
+
+```{r}
+
+lm(hwy~displ + factor(year), data = mpg)
+
+lm(hwy~displ + factor(year) + displ:factor(year), data = mpg)
+
+ggplot(mpg) +
+    aes(y=hwy,x=displ,color = factor(year)) +
+    geom_point() +
+    geom_smooth(method = "lm",se=FALSE)
+```
+
+**Simpsons Paradox**
+
+* The relationship between variables changes if sub-groups are considered
+
+### Chapter 3 : Multiple Linear Regression
+
+* mpg drops by -1.9 for every increase in displ holding cyl constant
+* similarly for cyl
+* Cant compare both coeff as displ and cyl are in different units
+
+
+```{r}
+
+
+lm(hwy ~ displ + cyl, data = mpg)
+
+summary(lm(hwy ~ displ + cyl, data = mpg))
+
+```
+
+**Adding third categorical variable**
+
+* Parallel planes
+* Cars manufactured in 2008 will have 1.336 higher mpg than cars manufactured in 1999, assuming displ and cyl is held constant
+* Intepret the coeff of numerical variables as slopes and those of categorical variables as intercepts
+* 
+
+
+```{r}
+
+lm(formula = hwy ~ displ + cyl + factor(year), data = mpg)
+
+```
+
+### Chapter 4 : Logistic Regression
+
+* Generalised linear models for fitting models where the response variable is not normal
+* One example is binary response
+* Apply link function to appropiratly transfer the scale of the response variable to match the output of the linear model
+
+
+
+```{r}
+
+mpg$is_new <- ifelse(mpg$year >2000, 1,0)
+
+ggplot(mpg,aes(x=cty, y=is_new)) +
+    geom_point() +
+    geom_smooth(method = "lm", se= 0) +
+    geom_smooth(method = "glm", se= 0,color = "red", 
+                method.args = list(family = "binomial"))
+
+
+```
+
+**Comparison of three scales**
+
+* Three scales approach to interpretation of coefficients
+
+* Probability scale :
+    + $\hat{y} = \frac{exp(\hat{\beta _0} + \hat{\beta _1 } . x )}{ 1 + exp(\hat{\beta _0} + \hat{\beta _1 } . x )}$
+    + scale : Easy to understand 
+    + function : logistic function is non-linear and hard to interpret
+
+* Odds scale : 
+    + Odds scale is the ratio of a binary even is the ratio of how often it happens over how often it doesnt happen
+    + Odds and probability are not the same but related by 
+    + odds(\hat{y})= \frac{\hat{y}}{1 - \hat{y}} = exp(\hat{\beta _0} + \hat{\beta _1 } . x )
+    + Change y scale to odds 
+    + scale : harder to interpret
+    + function : exponential and harder to interpret
+
+* Use odds ratio
+
+* Log odds scale :
+    + Natural log of the odds
+    + $logit(\hat{y}) = log\left [ \frac{\hat{y}}{1 - \hat{y}} \right ] = \hat{\beta _0} + \hat{\beta _1} . x$
+    + scale :log of the odds is impossible to interpret
+    + function : is linear and easy to interpret
+    
+
+>As you can see, none of these three is uniformly superior. Most people tend to interpret the fitted values on the probability scale and the function on the log-odds scale. The interpretation of the coefficients is most commonly done on the odds scale. Recall that we interpreted our slope coefficient β1 in linear regression as the expected change in y given a one unit change in x. On the probability scale, the function is non-linear and so this approach won't work. On the log-odds, the function is linear, but the units are not interpretable (what does the log of the odds mean??). However, on the odds scale, a one unit change in x
+leads to the odds being multiplied by a factor of β1. To see why, we form the odds ratio:
+$OR = \frac{odds(\hat{y} | x + 1 )}{ odds(\hat{y} | x )} = \exp{\beta_1}$
+
+>Thus, the exponentiated coefficent β1 tells us how the expected odds change for a one unit increase in the explanatory variable. It is tempting to interpret this as a change in the expected probability, but this is wrong and can lead to nonsensical predictions (e.g. expected probabilities greater than 1).
+ 
+ 
+** Using a logistic model **
+
+* The type argument in the predict (or the augment funtcion) take value as below 
+    + The default `link` is on the scale of the linear predictors. Thus for a default binomial model the default predictions are of log-odds (probabilities on logit scale). i.e The fitted values are on the log-odds scale  and  not very useful
+    + the alternative `response` is on the scale of the response variable. `type = "response"` gives the predicted probabilities. Here the fitted values are retrieved on the familiar probability scale (ie between 0 and 1)
+    + The `terms` option returns a matrix giving the fitted values of each term in the model formula on the linear predictor scale.
+
+
+### Chapter 5 : Case Study
+
+
+>Multiple regression can be an effective technique for understanding how a response variable changes as a result of changes to more than one explanatory variable. But it is not magic -- understanding the relationships among the explanatory variables is also necessary, and will help us build a better model. This process is often called exploratory data analysis (EDA) and is covered in another DataCamp course.
+
+> One quick technique for jump-starting EDA is to examine all of the pairwise scatterplots in your data. This can be achieved using the pairs() function. Look for variables in the nyc data set that are strongly correlated, as those relationships will help us check for multicollinearity later on.
+
+> Which pairs of variables appear to be strongly correlated?
+
+
+```{r}
+
+nyc <- fread(here("nyc-data.csv"))
+nyc$Case <- as.integer(nyc$Case)
+nyc$Restaurant <- as.factor(nyc$Restaurant)
+glimpse(nyc)
+
+pairs(nyc)
+
+nyc[which(is.na(nyc$Case)),]
+
+
+```
+
+
+> SLR models
+> Based on your knowledge of the restaurant industry, do you think that the quality of the food in a restaurant is an important determinant of the price of a meal at that restaurant? It would be hard to imagine that it wasn't. We'll start our modeling process by plotting and fitting a model for Price as a function of Food.
+
+> On your own, interpret these coefficients and examine the fit of the model. What does the coefficient of Food mean in plain English? "Each additional rating point of food quality is associated with a..."
+
+```{r}
+# Price by Food plot
+ggplot(data = nyc, aes(x = Food, y = Price)) +
+  geom_point()
+
+# Price by Food model
+lm(Price ~ Food, data = nyc)
+```
+
+
+**Incorporating another variable**
+
+* Do Italian restaurants located on the East Side of 5th Avenue tend to charge more ? If yes, how much more ?
+
+
+> Let's expand our model into a parallel slopes model by including the East variable in addition to Food.
+
+> Use lm() to fit a parallel slopes model for Price as a function of Food and East. Interpret the coefficients and the fit of the model. Can you explain the meaning of the coefficient on East in simple terms? Did the coefficient on Food change from the previous model? If so, why? Did it change by a lot or just a little?
+
+
+> Each additional rating point of food quality is associated with a $2.88 increase in the expected price of meal, after controlling for location.
+
+> The premium for an Italian restaurant in NYC associated with being on the east side of 5th Avenue is $1.46, after controlling for the quality of the food.
+
+
+```{r}
+
+lm(Price ~ Food + factor(East), data = nyc)
+
+```
+>Are people willing to pay more for better restaurant Service? More interestingly, are they willing to pay more for better service, after controlling for the quality of the food?
+
+```{r}
+
+lm(Price ~ Food + Service, data = nyc)
+
+# draw 3D scatterplot
+#p <- plot_ly(data = nyc, z = ~Price, x = ~Food, y = ~Service, opacity = 0.6) %>%
+#  add_markers() 
+
+# draw a plane
+#p %>%
+#  add_surface(x = ~x, y = ~y, z = ~plane, showscale = FALSE) 
+
+```
+
+**Higher dimensions**
+
+* **One variable could be a collinear with a linear combination of multiple variables**
+* Results in unstable coefficient estimates, though it doenst affect R2
+
+* Interpretation of location coefficient
+    + The premium for being on the East side of 5th Avenue is just less than a dollar, after controlling for the quality of food and service.
+press
+    + The impact of location is relatively small, since one additional rating point of either food or service would result in a higher expected price than moving a restaurant from the West side to the East side.
+press
+
+
+
+
+```{r}
+
+lm(Price ~ Food + Service + East, data = nyc)
+
+```
+
+
+```{r eval = FALSE}
+# draw 3D scatterplot
+p <- plot_ly(data = nyc, z = ~Price, x = ~Food, y = ~Service, opacity = 0.6) %>%
+  add_markers(color = ~factor(East)) 
+
+# draw two planes
+p %>%
+  add_surface(x = ~x, y = ~y, z = ~plane0, showscale = FALSE) %>%
+  add_surface(x = ~x, y = ~y, z = ~plane1, showscale = FALSE)
+```
+**Adding All variables**
+
+* Notice the dramatic change in the value of the Service coefficient.
+    + Since the quality of food, decor, and service were all strongly correlated, multicollinearity is the likely explanation
+    + Once we control for the quality of food, decor, and location, the additional information conveyed by service is negligible.
+
+
+
+```{r}
+lm(Price ~ Food+ Service+ Decor+East,data= nyc)
+```
+
+***
+
+# Summary
+
+### Chapter 1 : Parallel Slopes
+
+* Same slope but different intercepts arising due to the categorical variables
+* Important to convert the categorical variable to factor
+* The `broom::augment()` function - an easy way to add the fitted values to our data frame
+
+
+### Chapter 2 : Evaluating and extending parallel slopes model
+
+* The adjusted $R^2$ includes a term that penalizes a model for each additional explanatory variable (where p is the number of explanatory variables).
+     $R^2_{adj} = 1 - \frac{SSE}{SST} \cdot \frac{n-1}{n-p-1}$
+
+* Simpsons Paradox : The relationship between variables **changes** if sub-groups in the variables are considered
+
+### Chapter 3 : Multiple Linear Regression
+
+* Intepret the coeff of numerical variables as slopes and those of categorical variables as intercepts
+
+### Chapter 4 : Logistic Regression
+
+* Generalised linear models for fitting models where the response variable is not normal
+* One example is binary response
+* Apply link function to appropiratly transfer the scale of the response variable to match the output of the linear model
+
+* Interpretation of the coefficients
+    * Three scales approach to interpretation of coefficients
+    * Probability scale :
+        + $\hat{y} = \frac{exp(\hat{\beta _0} + \hat{\beta _1 } . x )}{ 1 + exp(\hat{\beta _0} + \hat{\beta _1 } . x )}$
+        + scale : Easy to understand 
+        + function : logistic function is non-linear and hard to interpret
+
+    * Odds scale : 
+        + Odds scale is the ratio of a binary even is the ratio of how often it happens over how often it doesnt happen
+        + Odds and probability are not the same but related by 
+        + odds(\hat{y})= \frac{\hat{y}}{1 - \hat{y}} = exp(\hat{\beta _0} + \hat{\beta _1 } . x )
+        + Change y scale to odds 
+        + scale : harder to interpret
+        + function : exponential and harder to interpret
+
+    * Log odds scale :
+        + Natural log of the odds
+        + $logit(\hat{y}) = log\left [ \frac{\hat{y}}{1 - \hat{y}} \right ] = \hat{\beta _0} + \hat{\beta _1} . x$
+        + scale :log of the odds is impossible to interpret
+        + function : is linear and easy to interpret
+        
+    * Most people tend to interpret the fitted values on the probability scale and the function on the log-odds scale. The interpretation of the coefficients is most commonly done on the odds scale.
+
+* Use odds ratio :On the odds scale, a one unit change in x leads to the odds being multiplied by a factor of β1. To see why, we form the odds ratio:
+$OR = \frac{odds(\hat{y} | x + 1 )}{ odds(\hat{y} | x )} = \exp{\beta_1}$
+
+* Predictions using Logistic model : The type argument in the predict (or the augment funtcion) take value as below 
+    + The default `link` is on the scale of the linear predictors. Thus for a default binomial model the default predictions are of log-odds (probabilities on logit scale). i.e The fitted values are on the log-odds scale  and  not very useful
+    + the alternative `response` is on the scale of the response variable. `type = "response"` gives the predicted probabilities. Here the fitted values are retrieved on the familiar probability scale (ie between 0 and 1)
+    + The `terms` option returns a matrix giving the fitted values of each term in the model formula on the linear predictor scale.
+    
+ 
+### Chapter 5 : Case Study
+
+* One variable could be a collinear with a linear combination of multiple variables
+
+***
