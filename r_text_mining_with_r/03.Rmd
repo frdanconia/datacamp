@@ -1,0 +1,414 @@
+---
+title: "Course Notes | Text Mining with R | DataCamp"
+author: "Peter"
+date: "`r Sys.Date()`"
+description: This is my note
+output:
+  prettydoc::html_pretty:
+    theme: Cayman
+    highlight: github
+    css: style.css
+---
+
+# Senetiment Analysis
+
+While word counts and visualizations suggest something about the content, we can do more. In this chapter, we move beyond word counts alone to analyze the sentiment or emotional valence of text.
+
+```{r, include=FALSE}
+library(tidyverse)
+library(tidytext)
+
+review_data <- read_csv("data/Roomba Reviews.csv")
+twitter_data <- readRDS("data/ch_1_twitter_data.rds")
+
+tidy_twitter <- twitter_data %>% 
+  # Tokenize the twitter data
+  unnest_tokens(word, tweet_text) %>% 
+  # Remove stop words
+  anti_join(stop_words)
+
+custom_stop_words <- tribble(
+  ~word,    ~lexicon,
+  "roomba", "CUSTOM",
+  "2",      "CUSTOM"
+)
+
+stop_words2 <- stop_words %>% 
+  bind_rows(custom_stop_words)
+
+tidy_review <- review_data %>% 
+  mutate(id = row_number()) %>% 
+  select(id, Date, Product, Stars, Review) %>% 
+  unnest_tokens(word, Review) %>% 
+  anti_join(stop_words2)
+```
+
+## Sentiment dictionaries
+
+__Bing dictionary__
+
+```{r, collapse=TRUE}
+get_sentiments("bing")
+
+get_sentiments("bing") %>% 
+  count(sentiment)
+```
+
+__Afinn dictionary__
+
+```{r, collapse=TRUE}
+get_sentiments("afinn")
+
+get_sentiments("afinn") %>% 
+  summarise(
+    min = min(score),
+    max = max(score)
+  )
+```
+
+__Loughran dictionary__
+
+```{r, collapse=TRUE}
+sentiment_counts <- get_sentiments("loughran") %>% 
+  count(sentiment) %>% 
+  mutate(sentiment2 = fct_reorder(sentiment, n))
+
+ggplot(sentiment_counts, aes(sentiment2, n)) + 
+  geom_col() + 
+  coord_flip() + 
+  labs(
+    title = "Sentiment Counts in Loughran",
+    x = "Counts", 
+    y = "Sentiment"
+  )
+```
+
+## Counting the NRC sentiments
+
+### Exercise
+
+The fourth dictionary included with the tidytext package is the `nrc` dictionary. Let's start our exploration with sentiment counts.
+
+### Instructions
+
+- I usually do this for you, but start with loading the `tidyverse` and `tidytext` packages.
+- Count the number of words associated with each sentiment in `nrc`.
+- Arrange the counts in descending order.
+
+### script.R
+
+```{r, collapse=TRUE}
+# Load the tidyverse and tidytext packages
+
+library(tidyverse) 
+library(tidytext)
+
+# Count the number of wrods associated with each sentiment in nrc
+get_sentiments("nrc") %>% 
+  count(sentiment) %>% 
+  # Arrange the counts in descending roder
+  arrange(desc(n))
+```
+
+## Visualizing the NRC sentiments
+
+### Exercise
+
+We've seen how visualizations can give us a better idea of patterns in data than counts alone. Let's visualize the sentiments from the `nrc` dictionary. I've loaded the `tidyverse` and `tidytext` packages for you already.
+
+### Instructions
+
+- Extract the `nrc` dictionary, count the sentiments and reorder them by count to create a new factor column, `sentiment2`.
+- Visualize `sentiment_counts` using the new sentiment factor column.
+- Change the title to "Sentiment Counts in NRC", x-axis to "Sentiment", and y-axis to "Counts".
+
+### script.R
+
+```{r, collapse=TRUE}
+# Pull in the nrc dictoinary, count the snetiments and reorder them by count
+sentiment_counts <- get_sentiments("nrc") %>% 
+  count(sentiment) %>% 
+  mutate(sentiment2 = fct_reorder(sentiment, n))
+
+# Visualize sentiment_counts using the new sentiment factor column 
+ggplot(sentiment_counts, aes(sentiment2, n)) + 
+  geom_col() + 
+  coord_flip() + 
+  # Change the title to "Sentiment Counts in NRC", x-axis to "Sentiment", and y-axis to "Counts"
+  labs(
+    title = "Sentiment Counts in NRC", 
+    x = "Sentiment", 
+    y ="Counts"
+  )
+```
+
+## Appending dictionaries
+
+__Using inner_join()__
+
+```{r, collapse=TRUE}
+tidy_review %>% 
+  inner_join(get_sentiments("loughran"))
+```
+
+__Counting sentiment__
+
+```{r, collapse=TRUE}
+sentiment_review <- tidy_review %>% 
+  inner_join(get_sentiments("loughran"))
+
+sentiment_review %>% 
+  count(sentiment)
+
+sentiment_review %>% 
+  count(word, sentiment) %>% 
+  arrange(desc(n))
+```
+
+__Visualizing sentiment__
+
+```{r, collapse=TRUE}
+sentiment_review2 <- sentiment_review %>% 
+  filter(sentiment %in% c("positive", "negative")) 
+
+word_counts <- sentiment_review2 %>% 
+  count(word, sentiment) %>% 
+  group_by(sentiment) %>% 
+  top_n(10, n) %>% 
+  ungroup() %>% 
+  mutate(word2 = fct_reorder(word, n))
+
+ggplot(word_counts, aes(word2, n, fill = sentiment)) + 
+  geom_col(show.legend = FALSE) + 
+  facet_wrap(~ sentiment, scales = "free") + 
+  coord_flip() + 
+  labs(
+    title = "Sentiment Word Counts",
+    x = "Words"
+  )
+```
+
+## Counting sentiment
+
+### Exercise
+
+The `tidy_twitter` dataset has been loaded for you. Let's see what sort of sentiments are most prevalent in our Twitter data.
+
+### Instructions
+
+- Join `tidy_twitter` and the NRC sentiment dictionary.
+- Count the sentiments in `sentiment_twitter`.
+- Arrange the sentiment counts in descending order.
+
+### script.R
+
+```{r, collapse=TRUE}
+# Join tidy_twitter and the NRC sentiment dictionary
+sentiment_twitter <- tidy_twitter %>% 
+  inner_join(get_sentiments("nrc"))
+
+# Count the sentiments in tidy_twitter
+sentiment_twitter %>% 
+  count(sentiment) %>% 
+  # Arrange the sentiment counts in descending order
+  arrange(desc(n))
+```
+
+## Visualizing sentiment
+
+### Exercise
+
+Let's explore which words are associated with each sentiment in our Twitter data.
+
+### Instructions 1/2
+
+Inner join `tidy_twitter` to the NRC dictionary and filter for positive, fear, and trust.
+Count by word and sentiment and keep only the top 10 of each sentiment.
+Create a factor called `word2` that has each word ordered by the count.
+
+### script.R
+
+```{r, collapse=TRUE}
+word_counts <- tidy_twitter %>% 
+  # Append the NRC dictionary and filter for positive, fear, and trust
+  inner_join(get_sentiments("nrc")) %>% 
+  filter(sentiment %in% c("positive", "fear", "trust")) %>% 
+  # Count by word and sentiment and keep the top 10 of each 
+  count(word, sentiment) %>% 
+  group_by(sentiment) %>% 
+  top_n(10, n) %>% 
+  ungroup() %>% 
+  # Create a factor calles word2 that has each word ordered by the count
+  mutate(word2 = fct_reorder(word, n))
+```
+
+### Instructions 2/2
+
+- Create a bar plot of the word counts colored by sentiment.
+- Create a separate facet for each sentiment with free axes.
+- Title the plot "Sentiment Word Counts" with "Words" for the x-axis.
+
+### script.R
+
+```{r, collapse=TRUE}
+# Create a bar plot out of the word counts colored by sentiment
+ggplot(word_counts, aes(word2, n, fill = sentiment)) + 
+  geom_col(show.legend = FALSE) + 
+  # Create a separate facet for each sentiment with free axes
+  facet_wrap(~ sentiment, scales = "free") + 
+  coord_flip() + 
+  # Title the plot "Sentiment Word Counts" with "Words" for the x-axis
+  labs(
+    title = "Sentiment Word Counts",
+    x = "Words"
+  )
+```
+
+## Improving sentiment analysis
+
+__Count sentiment by rating__
+
+```{r, collapse=TRUE}
+tidy_review %>% 
+  inner_join(get_sentiments("bing")) %>% 
+  count(Stars, sentiment)
+```
+
+__Using spread()__
+
+```{r, collapse=TRUE}
+tidy_review %>% 
+  inner_join(get_sentiments("bing")) %>% 
+  count(Stars, sentiment) %>% 
+  spread(sentiment, n)
+```
+
+__Computing overall sentiment__
+
+```{r, collapse=TRUE}
+tidy_review %>% 
+  inner_join(get_sentiments("bing")) %>% 
+  count(Stars, sentiment) %>% 
+  spread(sentiment, n) %>% 
+  mutate(overall_sentiment = positive - negative)
+```
+
+__Visualize sentiment by rating__
+
+```{r, collapse=TRUE}
+sentiment_stars <- tidy_review %>% 
+  inner_join(get_sentiments("bing")) %>% 
+  count(Stars, sentiment) %>% 
+  spread(sentiment, n) %>% 
+  mutate(
+    overall_sentiment = positive - negative, 
+    Stars = fct_reorder(as.factor(Stars), overall_sentiment)
+  )
+
+ggplot(sentiment_stars, aes(Stars, overall_sentiment, fill = as.factor(Stars))) +
+  geom_col(show.legend = FALSE) + 
+  coord_flip() +
+  labs(
+    title = "Overall Sentiment by Stars",
+    subtitle = "Reviews for robotic Vacuums",
+    x = "Stars",
+    y = "Overall Sentiment"
+  )
+
+```
+
+## Practicing reshaping data
+
+### Exercise
+
+The `spread()` verb allows us to quickly reshape or stack and transpose our data, making it easier to `mutate()`.
+
+### Instructions
+
+- Append `tidy_twitter` to the NRC sentiment dictionary.
+- Count by complaint label and sentiment.
+- Spread the sentiment and count columns.
+
+### script.R
+
+```{r, collapse=TRUE}
+tidy_twitter %>% 
+  # Appentd the NRC sentiment dictionary
+  inner_join(get_sentiments("nrc")) %>% 
+  # Count by complaint label and sentiment
+  count(complaint_label, sentiment) %>% 
+  # Spread the sentiment and count columns
+  spread(sentiment, n)
+```
+
+## Practicing with grouped summaries
+
+### Exercise
+
+We can use `spread()` in associtation with the output of grouped summaries as well.
+
+### Instructions
+
+- Append `tidy_twitter` to the afinn sentiment dictionary.
+- Group by both complaint label and whether or not the user is verified.
+- Summarize the data to create a new column, `aggregate_score`, which contains the sum of `score`.
+- Spread the `complaint_label` and `aggregate_score` columns.
+
+### script.R
+
+```{r, collapse=TRUE}
+tidy_twitter %>% 
+  # Append the afinn sentiment dictionary
+  inner_join(get_sentiments("afinn")) %>% 
+  # Group by both complaint label and whether or not the user is verified
+  group_by(complaint_label, usr_verified) %>% 
+  # Summarise the data with an aggregate_score = sum(score)
+  summarise(aggregate_score = sum(score)) %>% 
+  # Spread the complaint_label and aggregate_score columns
+  spread(complaint_label, aggregate_score) %>% 
+  mutate(overall_sentiment = Complaint + `Non-Complaint`)
+```
+
+## Visualizing sentiment by complaint type
+
+### Exercise 
+
+Now let's see whether or not complaints really are more negative, on average.
+
+### Instructions 1/2
+
+- Append `tidy_twitter` to the bing sentiment dictionary.
+- Count by complaint label and sentiment.
+- Spread the sentiment and count columns.
+- Add a new column, `overall_sentiment`, as `positive - negative`.
+
+### script.R 1/2
+
+```{r, collapse=TRUE}
+sentiment_twitter <- tidy_twitter %>% 
+  # Append the bing sentiment dictionary
+  inner_join(get_sentiments("bing")) %>% 
+  # Count by complaint label and sentiment
+  count(complaint_label, sentiment) %>% 
+  # Spread the sentiment and count columns
+  spread(sentiment, n) %>% 
+  # Compute overall_sentiment = positive - negative
+  mutate(overall_sentiment = positive - negative)
+```
+
+### Instuctoins 2/2
+
+- Create a bar plot of overall sentiment by complaint label, colored by complaint level (as a factor).
+- Title the plot "Overall Sentiment by Complaint Type," with the subtitle "Airline Twitter Data".
+
+### script.R 2/2
+
+```{r, collapse=TRUE}
+# Create a bar plot out of overall sentiment by complaint level, colored by a complaint label factor
+ggplot(sentiment_twitter, aes(complaint_label, overall_sentiment, fill = as.factor(complaint_label))) +
+  geom_col(show.legend = FALSE) + 
+  coord_flip() + 
+  # Title the plot "Overall Sentiment by Complaint Type," with an "Airline Twitter Data" subtitle
+  labs(title = "Overall Sentiment by Complaint Type", 
+       subtitle = "Airline Twitter Data")
+```

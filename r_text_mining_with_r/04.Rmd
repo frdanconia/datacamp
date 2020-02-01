@@ -1,0 +1,313 @@
+---
+title: "Course Notes | Text Mining with R | DataCamp"
+author: "Peter"
+date: "`r Sys.Date()`"
+description: This is my note
+output:
+  prettydoc::html_pretty:
+    theme: Cayman
+    highlight: github
+    css: style.css
+---
+
+```{r, include=FALSE}
+p_list <- c("topicmodels", "tidyverse", "tidytext")
+for (p in p_list) library(p, character.only = TRUE)
+
+# read files
+review_data <- read_csv("data/Roomba Reviews.csv")
+twitter_data <- readRDS("data/ch_1_twitter_data.rds")
+
+tidy_twitter <- twitter_data %>% 
+  # Tokenize the twitter data
+  unnest_tokens(word, tweet_text) %>% 
+  # Remove stop words
+  anti_join(stop_words)
+
+custom_stop_words <- tribble(
+  ~word,    ~lexicon,
+  "roomba", "CUSTOM",
+  "2",      "CUSTOM"
+)
+
+# tidy data
+stop_words2 <- stop_words %>% 
+  bind_rows(custom_stop_words)
+
+tidy_review <- review_data %>% 
+  mutate(id = row_number()) %>% 
+  select(id, Date, Product, Stars, Review) %>% 
+  unnest_tokens(word, Review) %>% 
+  anti_join(stop_words2)
+
+# LDA modeling
+lda_out <- LDA(
+  dtm_review, 
+  k = 2, 
+  method = "Gibbs",
+  control = list(seed = 42)
+)
+
+lda_topics <- lda_out %>% 
+  tidy(matrix = "beta")
+
+```
+
+
+# Topic Modeling
+
+In this final chapter, we move beyond word counts to uncover the underlying topics in a collection of documents. We will be using a standard topic model known as latent Dirichlet allocation.
+
+## Latent Dirichlet allocation
+
+__Unsupervised learning__
+
+Some more natural language processing (NLP) vocabulary:
+
+- Latent Dirichlet allocation (LDA) is a standard topic model
+- A collection of documents is known as a corpus
+- Bag-of-words is treating every word in a document separately 
+- Topic models find patterns of words appearing together
+- Searching for patterns rather than predicting is known as unsupervised learning
+
+__Word probabilities__
+
+__Clustering vs. topic modeling__
+
+Clustering
+
+- Clusters are uncovered based on distance, which is continuous.
+- Every object is assigned to a single cluster. 
+
+Topic Modeling
+
+- Topics are uncovered based on word frequency, which is discrete. 
+- Every document is a mixture (i.e., partial member) of every topic.
+
+## Topics as word probabilities
+
+### Exercise
+
+`lda_topics` contains the topics output from an LDA run on the Twitter data. Remember that each topic is a collection of word probabilities for all of the unique words used in the corpus. In this case, each tweet is its own document and the `beta` column contains the word probabilities.
+
+### Instructions 1/2
+
+Print the output from an LDA run on the Twitter data. It is stored in `lda_topics`.
+
+### script.R 1/2
+
+```{r, collapse=TRUE}
+# Print the output from LDA run
+lda_topics
+```
+
+### Instructions 2/2
+
+Arrange the topics by word probabilities in descending order.
+
+### script.R 2/2
+
+```{r, collapse=TRUE}
+# Start with the topics output from the LDA run
+lda_topics %>% 
+  # Arrange the topics by word probabilities in descending order
+  arrange(desc(beta))
+```
+
+## Summarizing topics
+
+### Exercise
+
+Let's explore some of the implied features of the LDA output using some grouped summaries.
+
+### Instructions
+
+- Produce a grouped summary of the LDA output by topic.
+- Calculate the sum of the word probabilities.
+- Count the number of terms.
+
+### script.R
+
+```{r, collapse=TRUE}
+# Produce a grouped summary of the LDA output by topic
+lda_topics %>% 
+  group_by(topic) %>% 
+  summarize(
+    # Calculate the sum of the word probabilities
+    sum = sum(beta),
+    # Count the number of terms
+    n = n()
+  )
+```
+
+## Visualizing topics
+
+### Exercise
+
+Using what we've covered in previous chapters, let's visualize the topics produced by the LDA.
+
+### Instructions
+
+- Keep the top 10 highest word probabilities by topic.
+- Create `term2`, a factor ordering `term` by word probability.
+- Plot `term2` and the word probabilities.
+- Facet the bar plot by (i.e., `~`) topic.
+
+### script.R
+
+```{r, collapse=TRUE}
+word_probs <- lda_topics %>%
+  # Keep the top 10 highest word probabilities by topic
+  group_by(topic) %>% 
+  top_n(10, beta) %>% 
+  ungroup() %>%
+  # Create term2, a factor ordered by word probability
+  mutate(term2 = fct_reorder(term, beta))
+
+# Plot term2 and the word probabilities
+ggplot(word_probs, aes(term2, beta)) +
+  geom_col() +
+  # Facet the bar plot by topic
+  facet_wrap(~ topic, scales = "free") +
+  coord_flip()
+```
+
+## Document term matrices
+
+__Matrices and Sparsity__
+
+```{r eval=FALSE}
+sparse_review
+```
+
+__Using cast_dtm()__
+
+```{r, collapse=TRUE}
+tidy_review %>% 
+  count(word, id) %>% 
+  cast_dtm(id, word, n)
+```
+
+__Using as.matrix()__
+
+```{r, collapse=TRUE}
+dtm_review <- tidy_review %>% 
+  count(word, id) %>% 
+  cast_dtm(id, word, n) %>% 
+  as.matrix()
+
+dtm_review[1:4, 2000:2004]
+```
+
+## Creating a DTM
+
+### Exercise
+
+Create a DTM using our `tidy_twitter` data. In this case, each tweet si considered a document. Print `itdy_twitter` in the console to confirm the column names.
+
+### Instructions
+
+- Start with the tidied Twitter data.
+- Count each word used in each tweet.
+- Use the word counts by tweet to create a DTM.
+
+### script.R
+
+```{r, collapse=TRUE}
+# Start with the tidied Twitter data
+tidy_twitter %>% 
+  # Count each word used in each tweet
+  count(word, tweet_id) %>% 
+  # Use the word counts by tweet to create a DTM
+  cast_dtm(tweet_id, word, n)
+```
+
+## Evaluating a DTM as a matrix
+
+### Exercise
+
+Let's practice casting our tidy data into a DTM and evaluating the DTM by treating it as a matrix.
+
+In this exercise, you will create a DTM again, but with a much smaller subset of the twitter data (`tidy_twitter_subset`).
+
+### Instructions
+
+- Cast the word counts by tweet into a DTM and assign it to dtm_twitter.
+- Coerce dtm_twitter into a matrix called matrix_twitter.
+- Print rows 1 through 5 and columns 90 through 95.
+
+### script.R
+
+```{r, collapse=TRUE}
+tidy_twitter_subset <- tidy_twitter[1:100, ]
+
+# Assign the DTM to dtm_twitter
+dtm_twitter <- tidy_twitter_subset %>% 
+  count(word, tweet_id) %>% 
+  # Cast the word counts by tweet into a DTM
+  cast_dtm(tweet_id, word, n)
+
+# Coerce dtm_twtter into a matrix called matrix_twitter
+matrix_twitter <- as.matrix(dtm_twitter)
+
+# Print rows 1 through 5 and columns 90 through 95
+matrix_twitter[1:5, 50:55]
+```
+
+## Running topic models
+
+__Using LDA()__
+
+```{r, collapse=TRUE}
+library(topicmodels)
+
+lda_out <- LDA(
+  dtm_review, 
+  k = 2, 
+  method = "Gibbs",
+  control = list(seed = 42)
+)
+```
+
+__LDA() output__
+
+```{r, collapse=TRUE}
+lda_out
+```
+
+__Using glimpse()__
+
+```{r, collapse=TRUE}
+glimpse(lda_out)
+```
+
+__Using tidy()__
+
+```{r, collapse=TRUE}
+lda_topics <- lda_out %>% 
+  tidy(matrix = "beta")
+
+lda_topics %>% 
+  arrange(desc(beta))
+```
+
+
+## Fitting an LDA
+
+
+## Tidying LDA output
+
+
+## Comparing LDA output
+
+
+## Interpreting topics
+
+
+## Naming three topics
+
+
+## Naming four topics
+
+
+## Wrap-up

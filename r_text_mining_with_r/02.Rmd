@@ -1,0 +1,470 @@
+---
+title: "Course Notes | Text Mining with R | DataCamp"
+author: "Peter"
+date: "`r Sys.Date()`"
+description: This is my note
+output:
+  prettydoc::html_pretty:
+    theme: Cayman
+    highlight: github
+    css: style.css
+---
+
+# Visualizing Text
+
+While counts are nice, visualizations are better. In this chapter, you will learn how to apply what you know and love from ggplot2 to tidy text data.
+
+```{r, include=FALSE}
+library(tidyverse)
+library(tidytext)
+
+review_data <- read_csv("data/Roomba Reviews.csv")
+twitter_data <- readRDS("data/ch_1_twitter_data.rds")
+```
+
+
+## Plotting word counts
+
+__Starting with tidy text__
+
+```{r, collapse=TRUE}
+tidy_review <- review_data %>% 
+  mutate(id = row_number()) %>% 
+  unnest_tokens(word, Review) %>% 
+  anti_join(stop_words)
+
+tidy_review %>% 
+  head(3)
+```
+
+__Visualizing counts with geom_bar()__
+
+```{r, collapse=TRUE}
+word_counts <- tidy_review %>% 
+  count(word) %>% 
+  arrange(desc(n))
+
+ggplot(word_counts, aes(word, n)) + 
+  geom_col()
+```
+
+__filter() before visualizing__
+
+```{r, collapse=TRUE}
+word_counts2 <- tidy_review %>% 
+  count(word) %>% 
+  filter(n > 300) %>% 
+  arrange(desc(n))
+
+word_counts2 %>% head(2)
+```
+
+__Using coord_filp()__
+
+```{r, collapse=TRUE}
+ggplot(word_counts2, aes(word, n)) + 
+  geom_col() + 
+  coord_flip() +
+  ggtitle("Review Word counts")
+```
+
+## Visualizing complaints
+
+### Exercise
+
+We ended the last chapter with complaint word counts. Now let's visualize those word counts with a bar plot.
+
+The `tidyverse` and `tidytext` packages have been loaded. `twitter_data` has been tokenized and the standard stop words have been removed.
+
+### Instructions
+
+Only keep the words with counts greater than 100.
+Create a bar plot using `word_counts` with `word` mapped to the x-axis.
+Flip the plot coordinates.
+
+### script.R
+
+```{r, echo=FALSE}
+tidy_twitter <- twitter_data %>% 
+  # Tokenize the twitter data
+  unnest_tokens(word, tweet_text) %>% 
+  # Remove stop words
+  anti_join(stop_words)
+```
+
+
+```{r, collapse=TRUE}
+word_counts <- tidy_twitter %>% 
+  filter(complaint_label == "Complaint") %>% 
+  count(word) %>% 
+  # Keep words with count greater than 100
+  filter(n > 100)
+
+# Create a bar plot using word_counts with x = word
+ggplot(word_counts, aes(word, n)) + 
+  geom_col() +
+  # Flip the plot coordinates
+  coord_flip()
+```
+
+## Visualizing non-complaints
+
+### Exercise
+
+Now let's visualize the word counts associated with non-complaints.
+
+### Instructions
+
+Only keep the non-complaints.
+Create a bar plot using the new `word_counts`.
+Title the plot "Non-Complaint Word Counts".
+
+### script.R
+
+```{r, collapse=TRUE}
+word_counts <- tidy_twitter %>% 
+  # Only keep the non-complaints
+  filter(complaint_label == "Non-Complaint") %>% 
+  count(word) %>% 
+  filter(n > 150)
+
+# Create a bar plot using the new word_counts
+ggplot(word_counts, aes(word, n)) +
+  geom_col() +
+  coord_flip() +
+  # Title the plot "Non-Complaint Word Counts"
+  ggtitle("Non-Complaint Word Counts")
+```
+
+## Improving word count plots
+
+__Custom stop words__
+
+```{r, collapse=TRUE}
+stop_words %>% head(3)
+```
+
+__Using tribble()__
+
+```{r, collapse=TRUE}
+tribble(
+  ~word,    ~lexicon,
+  "roomba", "CUSTOM",
+  "2",      "CUSTOM"
+)
+```
+
+__Using bind_rows()__
+
+```{r, collapse=TRUE}
+custom_stop_words <- tribble(
+  ~word,    ~lexicon,
+  "roomba", "CUSTOM",
+  "2",      "CUSTOM"
+)
+
+stop_words2 <- stop_words %>% 
+  bind_rows(custom_stop_words)
+```
+
+__Removing stop words again__
+
+```{r, collapse=TRUE}
+tidy_review <- review_data %>% 
+  mutate(id = row_number()) %>% 
+  select(id, Date, Product, Stars, Review) %>% 
+  unnest_tokens(word, Review) %>% 
+  anti_join(stop_words2)
+
+tidy_review %>% 
+  filter(word == "roomba")
+```
+
+__Using fct_reorder()__
+
+```{r, collapse=TRUE}
+word_counts <- tidy_review %>% 
+  count(word) %>% 
+  filter(n > 300) %>% 
+  mutate(word2 = fct_reorder(word, n))
+
+word_counts %>% head(3)
+```
+__Arranging the bar plot__
+
+```{r, collapse=TRUE}
+ggplot(word_counts, aes(word2, n)) + 
+  geom_col() + 
+  coord_flip() + 
+  ggtitle("Review Word Counts")
+```
+
+## Adding custom stop words
+
+### Exercise
+
+We've seen a number of words in `twitter_data` that aren't informative and should be removed from your final list of words. In this exercise, you will add a few words to your `custom_stop_words` data frame .
+
+### Instructions
+
+- The column names for the new data frame of custom stop words should match `stop_words`.
+- Add `http`, `win`, and `t.co` as custom stop words.
+- Row bind the custom stop words to `stop_words`.
+
+### script.R
+
+```{r, collapse=TRUE}
+custom_stop_words <- tribble(
+  # Column names should match stop_words
+  ~word, ~lexicon,
+  # Add http, win, and t.co as custom stop words
+  "http", "CUSTOM",
+  "win", "CUSTOM",
+  "t.co", "CUSTOM"
+)
+
+# Bind the custom stop words to stop_words
+stop_words2 <- stop_words %>% 
+  rbind(custom_stop_words)
+```
+
+## Visualizing word counts using factors
+
+### Exercise
+
+I've added a number of other custom stop words (including the airline names) and tidied the data for you. Now you will create an improved visualization and plot the words arranged in descending order by word count.
+
+### Instructions
+
+- Only keep the terms that occur more than 100 times in the `non_complaints`.
+- Reorder the `word` column as a factor ordered by word counts.
+- Create a bar plot using the new word column with type factor.
+
+### script.R
+
+```{r, collapse=TRUE}
+word_counts <- tidy_twitter %>% 
+  filter(complaint_label == "Non-Complaint") %>% 
+  count(word) %>% 
+  # Keep terms that occur more than 100 times
+  filter(n > 100) %>% 
+  # Reorder word as an ordered factor by word counts
+  mutate(word2 = fct_reorder(word, n))
+
+# Plot the new word column with type factor
+ggplot(word_counts, aes(word2, n)) +
+  geom_col() +
+  coord_flip() +
+  ggtitle("Non-Complaint Word Counts")
+```
+
+## Faceting word count plots
+
+__Counting by Product__
+
+```{r, collapse=TRUE}
+tidy_review %>% 
+  count(word, Product) %>% 
+  arrange(desc(n))
+```
+
+__Using top_n()__
+
+```{r, collapse=TRUE}
+tidy_review %>% 
+  count(word, Product) %>% 
+  group_by(Product) %>% 
+  top_n(10, n)
+```
+
+__Using ungroup()__
+
+```{r, collapse=TRUE}
+tidy_review %>% 
+  count(word, Product) %>% 
+  group_by(Product) %>% 
+  top_n(10, n) %>% 
+  ungroup()
+```
+
+__Using fct_reorder()__
+
+```{r, collapse=TRUE}
+word_counts <- tidy_review %>% 
+  count(word, Product) %>% 
+  group_by(Product) %>% 
+  top_n(10, n) %>% 
+  ungroup() %>% 
+  mutate(word2 = fct_reorder(word, n))
+```
+
+__Using facet_wrap()__
+
+```{r, collapse=TRUE}
+ggplot(word_counts, aes(word2, n, fill = Product)) + 
+  geom_col(show.legend = FALSE) + 
+  facet_wrap(~ Product, scales = "free_y") + 
+  coord_flip() + 
+  ggtitle("Review Word Counts")
+```
+
+## Counting by product and reordering
+
+### Exercise
+
+`tidy_twitter` has been tokenized and stop words, including custom stop words, have been removed. You would like to visualize the differences in word counts based on complaints and non-complaints.
+
+### Instructions
+
+- Count words by whether or not its a complaint.
+- Keep the top 20 words by whether or not its a complaint.
+- Ungroup before reordering word as a factor by the count.
+
+### script.R
+
+```{r, collapse=TRUE}
+word_counts <- tidy_twitter %>% 
+  # Count words by whether or not its a complaint
+  count(word, complaint_label) %>% 
+  # Group by whether or not its a complaint
+  group_by(complaint_label) %>% 
+  # Keep the top 20 words 
+  top_n(20, n) %>% 
+  # Ungroup before reordering word as a factor by the count
+  ungroup() %>% 
+  mutate(word2 = fct_reorder(word, n))
+```
+
+## Visualizing word counts with facets
+
+### Exercise
+
+The `word_counts` from the previous exercise have been loaded. Let's visualize the word counts for the Twitter data with separate facets for complaints and non-complaints.
+
+### Instructions
+
+- Include a color aesthetic tied to whether or not its a complaint.
+- Don't include the lengend for the column plot.
+- Facet by whether or not the tweet comes from a complaint and make the y-axis free.
+- Flip the coordinates and add a title: "Twitter Word Counts".
+
+### script.R
+
+```{r, collapse=TRUE}
+# Include a color aesthetic tied to whether or not its a complaint
+ggplot(word_counts, aes(word2, n, fill = complaint_label)) + 
+  # Don't include the lengend for the column plot
+  geom_col(show.legend = FALSE) + 
+  # Facet by whether or not its a complaint and make the y-axis free
+  facet_wrap(~ complaint_label, scales = "free_y") + 
+  # Flip the coordinatesa and a title: "Twitter Word Counts"
+  coord_flip() + 
+  ggtitle("Twitter Word Counts")
+```
+
+## Plotting word clouds
+
+__Using wordcloud()__
+
+```{r, collapse=TRUE}
+library(wordcloud)
+
+word_counts <- tidy_review %>% 
+  count(word)
+
+wordcloud(
+  words = word_counts$word,
+  freq = word_counts$n,
+  max.words = 30
+)
+```
+
+__Fixed size and random start points__
+
+```{r, collapse=TRUE}
+wordcloud(
+  words = word_counts$word,
+  freq = word_counts$n,
+  max.words = 30
+)
+```
+
+__Number of words in the cloud__
+
+```{r, collapse=TRUE}
+wordcloud(
+  words = word_counts$word,
+  freq = word_counts$n,
+  max.words = 70
+)
+```
+
+__Using colors__
+
+```{r, collapse=TRUE}
+wordcloud(
+  words = word_counts$word,
+  freq = word_counts$n,
+  max.words = 30,
+  colors = "blue"
+)
+```
+
+## Creating a word cloud
+
+### Exercise
+
+We've seen bar plots, now let's visualize word counts with word clouds! `tidy_twitter` has already been loaded, tokenized, and cleaned.
+
+### Instructions
+
+- Load the `wordcloud` package.
+- Compute the word counts and assign to `word_counts`.
+- Assign the word column from `word_counts` to the `words` argument.
+- Assign the count column (`n`) from `word_counts` to the `freq` argument.
+
+### script.R
+
+```{r, collapse=TRUE}
+# Load the wordcloud package
+library(wordcloud)
+
+# Compute word counts and assign to word_counts
+word_counts <- tidy_twitter %>% 
+  count(word)
+
+wordcloud(
+  # Assign the word column to words
+  words = word_counts$word,
+  freq = word_counts$n,
+  max.words = 30
+)
+```
+
+## Adding a splash of color
+
+### Exercise
+
+What about just the complaints? And let's add some color. Red seems appropriate. The `wordcloud` package has been loaded along with `tidy_twitter`.
+
+### Instructions
+
+- Compute the word counts only for the complaints and assign it to word_counts.
+- Create a complaint word cloud of the top 50 terms, colored red.
+
+### script.R
+
+```{r, collapse=TRUE}
+# Compute complaint word counts and assign to word_counts
+word_counts <- tidy_twitter %>% 
+  filter(complaint_label == "Complaint") %>% 
+  count(word)
+
+# Create a complaint word cloud of the top 50 terms, colored red
+wordcloud(
+  words = word_counts$word,
+  freq = word_counts$n,
+  max.words = 50,
+  colors = "red"
+)
+```
