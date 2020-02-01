@@ -1,0 +1,397 @@
+---
+title: "Time Series with data.table in R"
+author: "Amit Agni"
+date: "22/02/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(pacman)
+
+p_load(data.table,xts,lubridate,Quandl,here)
+
+```
+
+### Chapter 1 : Review of data.table
+
+* Selecting columns with names stored in a vector is a powerful tool to know.  
+
+* get() - takes in string, and returns the values inside object
+
+* Using {}  
+
+* set .. functions
+
+* Creating and selecting columns with variables means you can pass new data through your code without needing to copy and paste common operations.  
+
+* Complete add_interaction(), which should take two column names and produce a new column that holds the result of multiplying the two columns together.
+
+```{r}
+vec <- c("asdasd","sdsds","sdsds")
+get("vec")
+
+
+add_interaction <- function(someDT, col1, col2){
+    new_col_name <- paste0(col1, "_times_", col2)
+    someDT[, (new_col_name) := get(col1) * get(col2)]
+}
+
+```
+
+* scale_by_10() should select a column, multiply it by 10, and store the result in a new column. Use this function to scale the engine temperature column by 10. Call the new column "temp10".
+
+> The fact that the := operator changes the data.table in place also greatly reduces the risk that you'll blow out your memory.
+
+
+```{r}
+
+# Write a function to scale a column by 10
+#Use () to the left of the := to ensure you get a new column named by whatever string is in new_col_name.
+#Use get() to the right of the := to select the column named by the current value of col_to_scale.
+
+# Write a function to scale a column by 10
+scale_by_10 <- function(someDT, col_to_scale, new_col_name){
+    someDT[, (new_col_name) := get(col_to_scale) * 10]
+}
+
+# Try it out
+
+#scale_by_10(diagnosticDT, col_to_scale = "engine_temp", new_col_name = "temp10")
+
+# Check the state of the data.table
+#head(diagnosticDT)
+
+
+```
+
+Write a function that squares every numeric column
+
+```{r}
+
+# Write a function that squares every numeric column
+add_square_features <- function(someDT, cols){
+    for (col_name in cols){
+        new_col_name <- paste0(col_name,"_squared")
+        someDT[, (new_col_name) := get(col_name) ^ 2 ]
+    }
+}
+
+# Look at the difference!
+#add_square_features(diagnosticDT,c("engine_speed","engine_temp","system_voltage"))
+
+#head(diagnosticDT)
+
+```
+
+**setnames**
+
+* Complete tag_numeric_cols(). This function should take in a data.table and a vector of column names, and add _NUMERIC to the end of those columns.  
+
+> Did you notice that the function you wrote didn't return anything? The fact that you used in-place modification means that this will be fast even on very large data tables.
+
+```{r}
+# Tag all the numeric columns with "_NUMERIC"
+tag_numeric_cols <- function(DT, cols){
+    setnames(DT, old = cols, new = paste0(cols, "_NUMERIC"))
+}
+
+v<-c(TRUE,FALSE)
+names(mtcars)[v]
+
+```
+
+
+**functions inside DT**
+
+The correlations() function is meant to take in a data.table and return a correlation matrix of all the numeric columns. 
+
+```{r}
+
+# Mean of engine temp
+#diagnosticDT[, mean(engine_temp)]
+
+# Correlation between engine_temp and system_voltage
+#diagnosticDT[, cor(engine_temp, system_voltage)]
+
+# Get classes of column names
+correlations <- function(DT){
+    # Find numeric columns
+    num_cols <- DT[, sapply(.SD, is.numeric)]
+    numeric_cols <- names(DT)[num_cols]
+    return(DT[, cor(.SD), .SDcols = numeric_cols])
+}
+
+# Function to get correlation matrix from a data.table
+corrmat_from_dt <- function(DT){
+    numeric_cols <- get_numeric_cols(DT)
+    return(DT[, cor(.SD), .SDcols = numeric_cols])
+}
+
+
+```
+
+
+### Chapter 2 : Getting ts data into data.table
+
+
+**Overview of POSIXct type**
+
+* POSIXlt stores dates in human readable form  
+* POSIXct - signed integer representing seconds since 01-01-1970 with a single attribute for tz  
+
+> The origin argument expects a string date in a format like "2000-01-01". Recall that Excel-format dates need to be converted to R Date objects before you can turn them into POSIXct objects.
+
+
+```{r}
+
+
+# Create POSIXct dates from a hypothetical Excel dataset
+#excelDT[, posix := as.POSIXct(as.Date(timecol, origin = "1900-01-01"), tz = "UTC")]
+
+# Convert strings to POSIXct
+#stringDT[, posix := as.POSIXct(timecol, tz = "UTC")]
+
+# Convert epoch seconds to POSIXct
+#epochSecondsDT[, posix := as.POSIXct(timecol, tz = "UTC", origin = "1970-01-01")]
+
+# Convert epoch milliseconds to POSIXct
+#epochMillisDT[, posix := as.POSIXct(timecol / 1000, tz = "UTC", origin = "1970-01-01")]
+
+
+
+```
+
+
+**Creating data.tables from vectors**
+
+```{r}
+
+
+# Generate sample IoT data
+iotDT <- data.table(
+    timestamp = seq.POSIXt(as.POSIXct("2016-04-19 00:00:00"), as.POSIXct("2016-04-20 00:00:00"), length.out = 25),
+    engine_temp = rnorm(n = 25),
+    ambient_temp = rnorm(n = 25)
+)
+head(iotDT)
+
+```
+
+
+**Coercing from xts**
+
+>Brief overview of xts : Unlike a data.frame, a flat data representation with no concept of special-purpose columns, an xts object is a complex object that separates out the main time component, or index, from all other observations.
+
+
+
+```{r}
+
+# Simulated data
+some_data <- rnorm(100)
+some_dates <- seq.POSIXt(
+  from = as.POSIXct("2017-06-15 00:00:00Z", tz = "UTC"),
+  to = as.POSIXct("2017-06-15 01:00:00Z", tz = "UTC"),
+  length.out = 100
+)
+
+# Make your own 'xts' object
+myXTS <- xts::xts(x = some_data, order.by = some_dates)
+
+# View the timezone
+print(attr(myXTS, "tzone"))
+
+
+```
+
+
+**Why does anyone use xts for time series data?**
+
+> xts has some really cool functionality that was originally designed with financial data in mind.
+For example, xts allows you to use human-readable dates to subset the data. In addition, for unevenly-spaced time series it's trivial to create windowed simple aggregations. Try running xts::to.hourly(nickelXTS).
+
+
+```{r}
+
+#Create fifteenXTS, an xts object that holds the final 15 minutes of that hour.
+#fifteenXTS <- nickelXTS['2018-01-01 00:45:00/']
+
+#Generate 10-minute aggregations of nickel prices.
+#tenMinuteXTS <- xts::to.minutes10(nickelXTS)
+
+#Get similar aggregations at the 1-minute frequency`.
+#oneMinuteXTS <- xts::to.minutes(nickelXTS)
+
+```
+
+
+**Combining datasets with merge and rbindlist**
+
+* use round() if ts columns are different
+* rbindlist()
+
+```{r}
+
+
+```
+
+### Chapter 3 : Generating lags, differences, and windowed aggregations
+
+**Generating lags**
+
+* shift()
+* setorderv() - use before shift()
+* stargazer package
+
+
+```{r}
+
+# Add 1-period and 2-period lags
+#aluminumDT[, lag1 := shift(price, type = "lag", n = 1)]
+#aluminumDT[, lag2 := shift(price, type = "lag", n = 2)]
+
+# Fit models with 1 and 2 lags
+#mod1 <- lm(price ~ lag1, data = aluminumDT)
+#mod2 <- lm(price ~ lag1 + lag2, data = aluminumDT)
+
+# Compare
+#stargazer::stargazer(list(mod1, mod2), type = "text")
+
+
+```
+
+**Growth rates and differences**
+
+* Differencing
+    + Stationary forms - any 2 chosen periods will have same mean and variance  
+
+* Growth rates : ratio - 1    
+
+**windowing with j and by**
+
+* Generate a new column called "hour_end" that holds an indicator for the hour bucket each date-time falls into.  
+* data.table's j clause can be used to apply functions to data. Combining by and floor(), we can generate fixed-window aggregates such as "1-day average"!  
+* Windowed aggregations are incredibly valuable in doing data science with time series data. They can be used to downsample high-frequency data so plotting code doesn't make your computer explode.
+
+ 
+```{r}
+
+
+
+#seconds_in_an_hour <- 60 * 60
+#passengerDT[, hour_end := floor(obs_time_in_seconds / seconds_in_an_hour)]
+
+#Use .N and group on asset to confirm that this worked. Since the data are collected every 15 minutes, you should see 4 observations in each hour.
+
+```
+
+
+
+### Chapter 4 : Case Study - modeling metal prices
+
+**Merging five tables into one using Reduce()**
+
+```{r}
+
+# Merge five tables into one
+# mergedDT <- Reduce(
+#     f = function(x, y){
+#         merge(x, y, all = TRUE, by = "close_date")
+#     },
+#     x = list(aluminumDT, copperDT, cobaltDT, nickelDT, tinDT)
+# )
+
+```
+
+**Time Series feature engg**
+* **When DT is passed to a function, it is passed as a reference and not as a copy of object**
+
+* implement add_diffs(), a function to generate first differences and add them to a time series dataset!
+
+* grep() to find columns containing _price
+
+```{r}
+
+
+# Function to add differences
+add_diffs <- function(DT, cols, ndiff){
+    for (colname in cols){
+        new_name <- paste0(colname, "_diff", ndiff)
+        DT[, (new_name) := get(colname) - shift(get(colname), type = "lag", n = ndiff)]
+    }
+}
+
+#grep(pattern = "_price",x=names(metalsDT),value = TRUE)
+
+# Function to add growth rates
+add_growth_rates <- function(DT, cols, ndiff){
+    for (colname in cols){
+        new_name <- paste0(colname, "_pctchg", ndiff)
+        DT[, (new_name) := (get(colname) / shift(get(colname), type = "lag", n = ndiff)) - 1]
+    }
+}
+
+
+# Function to get correlation matrix from a data.table
+corrmat_from_dt <- function(DT, cols){
+    # Subset to the requested columns
+  	subDT <- DT[, .SD, .SDcols = cols]
+ 
+  	# Drop NAs
+    subDT <- subDT[complete.cases(subDT)]
+ 
+    return(cor(subDT))
+}
+
+```
+
+
+
+![](`r here("feature-selection-strategies.jpeg")`)
+
+
+
+# Summary
+
+Overall a very basic and superficial course. No depth, nothing on rolling joins, handling of missing time periods, etc. Some content that I found interesting is summarised below :
+
+* use of get() to extract the values inside columns as objects
+    + LHS of := inside brackets tells R to evaluate this object and use its value as a column name
+    + **someDT[, (new_col_name) := get(col_name) ^ 2 ]**   
+<br>
+* Use of functions inside DT, lapply is not always needed  
+
+* Widowing and aggregation using xts
+    + Window after 00:45:00 - nickelXTS['2018-01-01 00:45:00/']
+    + 10-minute aggregations of nickel prices - xts::to.minutes10(nickelXTS)
+    + aggregations at the 1-minute frequency - xts::to.minutes(nickelXTS)  
+<br>
+* a new column called "hour_end" that holds an indicator for the hour bucket each date-time falls into. 
+    + seconds_in_an_hour <- 60 * 60
+    + passengerDT[, hour_end := floor(obs_time_in_seconds / seconds_in_an_hour)]  
+<br>
+* Find numeric columns  
+    + **num_cols <- DT[, sapply(.SD, is.numeric)]**  
+<br>
+* When DT is passed to a function, it is passed as a reference and not as a copy of object
+
+* return(invisible(NULL)) : invisible() function can be useful when it is desired to have functions return values which can be assigned, but which do not print when they are not assigned.
+
+* Use of stargazer() package for model evaluations
+
+* Use of **Reduce() to rbind multiple lists**
+    + mergedDT <- Reduce(
+         f = function(x, y){  
+           merge(x, y, all = TRUE, by = "close_date")
+         },  
+           x = list(aluminumDT, copperDT, cobaltDT,              nickelDT, tinDT))  
+<br>
+* Implementation of following functions
+    + add_diff()
+    + add_growth_rate()
+    + correlation matrix from DT  
+    
+    
+***
+
+
