@@ -1,0 +1,112 @@
+Read a CSV file
+In this exercise, you'll use read_csv() twice. The first time you will only specify the filename, but you'll notice a problem with the imported data. The second time you'll use a new argument called skip to fix the problem. Remember to use ?read_csv to read more about arguments like skip and how to use them.
+
+The data you'll work with is from "The Great British Bake-Off." The file "bakeoff.csv" contains data for each episode of the show, organized by series and baker.
+
+Instructions 4/4
+25 XP
+Adapt your code to read in "bakeoff.csv" again, but this time, use the skip argument to skip the first line before reading the data. Print again to view it. Remember you can use ?read_csv.
+
+# Load readr
+library(readr)
+
+# Create bakeoff but skip first row
+bakeoff <- read_csv("bakeoff.csv")
+
+# Print bakeoff
+bakeoff
+
+bakeoff <- read_csv("bakeoff.csv", skip=1)
+bakeoff
+
+____________________________________________________________________________________________________________________________
+
+Assign missing values
+The read_csv() function also has an na argument, which allows you to specify value(s) that represent missing values in your data. The default values for the na argument are c("", "NA"), so both are recoded as missing (NA) in R. When you read in data, you can add additional values like the string "UNKNOWN" to a vector of missing values using the c() function to combine multiple values into a single vector.
+
+The is.na() function is also helpful for identifying rows with missing values for a variable.
+
+Instructions 4/4
+18 XP
+Add a filter() line after the pipe (%>%) now to show rows where showstopper is missing, using the is.na() function.
+
+# Load dplyr
+library(dplyr)
+
+# Filter rows where showstopper is UNKNOWN 
+bakeoff %>% 
+    filter(showstopper == "UNKNOWN")
+
+# Edit to add list of missing values
+bakeoff <- read_csv("bakeoff.csv", skip = 1,
+                    na = c("", "NA", "UNKNOWN"))
+
+# Filter rows where showstopper is NA 
+bakeoff %>%
+  filter(is.na(showstopper))
+  
+____________________________________________________________________________________________________________________________
+  
+Arrange and glimpse
+From here, if we don't ask you to load a package, you can assume it's already loaded.
+
+You can combine glimpse() with other functions in a sequence using the pipe (%>%) operator. For example, you can use other dplyr functions like arrange first, then use glimpse by adding a line after the final pipe (%>%):
+
+bakers_mini %>% 
+  arrange(age) %>% 
+  glimpse() # no argument needed here
+Take a glimpse of the bakeoff data we imported in the first set of exercises. On which date did the first episode of the show air in the US?
+
+Answer: 2014-12-28
+
+____________________________________________________________________________________________________________________________
+
+Summarize your data
+You can combine skim() with other functions in a sequence using the pipe (%>%) operator. For example, you could use other dplyr functions like group_by first, then use skim() by adding a line after the final pipe.
+
+bakers_mini %>% 
+  group_by(series) %>% 
+  skim() # no argument needed here
+This will produce summary statistics for each series. Let's practice this!
+
+# Load skimr
+library(skimr)
+
+# Edit to filter, group by, and skim
+bakeoff %>% 
+  filter(!is.na(us_season)) %>% 
+  group_by(us_season)  %>% 
+  skim()
+
+____________________________________________________________________________________________________________________________
+Know your variable types
+How many variables of each type do we have in the bakeoff data? You may use any of the data science tools we've learned for getting to know your data (dplyr and skimr are loaded for you). You may also want to try piping a skimmed object to summary(), also from the skimr package:
+
+tibble_name %>% 
+  skim() %>%  # no argument needed here
+  summary() # no argument needed here
+
+Answer:
+Date: 2, character: 3, factor: 1, integer:
+____________________________________________________________________________________________________________________________
+
+
+____________________________________________________________________________________________________________________________
+
+
+____________________________________________________________________________________________________________________________
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
