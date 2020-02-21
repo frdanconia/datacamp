@@ -1,0 +1,32 @@
+The choice of prior to use for parameters can be somewhat tricky.  If the parameters in question are well-studied, there may be reasonably precise bounds around the parameter value.  However, previous information doesn't exist about all parameters, so sometimes ``vague priors" and ``uninformative priors" are used to let the model have more freedom in determining parameter values.  We'll focus first on this kind of prior.
+
+\subsection{Uninformative Priors}
+
+A common choice of uninformative prior is the ``flat" or uniform prior.  In rjags code, a flat prior between two numbers $a$ and $b$ is represented by \code{dunif(a,b)}.  This is easy to understand and weights each value in the interval $[a,b]$ with equal value.  However, the ``fairness" of the uniform prior does need some careful consideration.  Consider the case when the parameter of interest is the slope of a line.  Using a uniform prior on $[0,100]$ means that lines with slope greater than unity are 99\% more likely than lines with slope less than unity.  This is easy to see graphically: if we plot lines with slope $0,1,2,3,...$, we get
+
+<<fig.pos="H", fig.height=4, fig.width=4>>=
+plot(0,0)
+for(i in 0:100){
+  abline(0,i,col='red');
+}
+@
+
+Clearly, more steep lines exist than shallow lines, so this prior is probably less ``fair" than you might have thought.  A more fair alternative might be a uniform prior on $\phi$, the angle between the line and the x-axis.  Then the slope corresponding to each $\phi$ is $b = \tan \phi$ (because slope is $\Delta y / \Delta x = \sin \phi / \cos \phi$).  To see this graphically:
+
+<<fig.pos="H", fig.height=4, fig.width=4>>=
+plot(0,0)
+phi_array = seq(from = 0, to = pi/2, by = 0.1)
+for(phi in phi_array){
+  abline(0,tan(phi),col='red');
+}
+@
+
+So, if a uniformly-weighted prior is desired, sometimes it takes a bit of thought to achieve.  It is a good idea to think about whether you would rather be totally ignorant of the scale of the parameter rather than the value of the parameter -- if you are ignorant of the parameter's order of magnitude, then it is as likely to be in $[1,10]$ as it is to be in $[100,1000]$.  This corresponds to a logarithmic decaying prior, which could be created as a uniform prior on the power of ten and then taking the logarithm for the parameter value. 
+
+In the past, people have put a lot of effort into find the ``best" non-informative prior to use.   The current concensus is that there is not one single uninformative prior that is the best to use for all models, though some fields do have standard default priors.  
+
+Vague priors are usually very broad in the sense that they cover a large amount of the parameter's possible values.  Examples of this include a wide uniform distribution and a Gaussian with large variance.  A vague prior may still have some information;  for instance, using a wide lognormal distribution will require the posterior to be non-negative. 
+
+\subsection{Informative Priors}
+
+If some information about the parameters is already known before the data analysis, this can (and should) be encoded in the prior.  For example, if previous experiments have estimated the value of the parameter of interest, you might use a prior of a Gaussian centered on the existing estimate.  Strictly non-negative parameters can be described with a lognormal distribution, and in general the more flexible distributions (eg gamma) can be used with carefully chosen shape parameters to get a wide range of shapes.  

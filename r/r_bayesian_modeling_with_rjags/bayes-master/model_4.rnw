@@ -1,0 +1,207 @@
+In general, relationships between variables may not be linear.  One of the conveniences of using JAGS is the ability to analyze data without transforming columns of your data back and forth. 
+
+\subsubsection{Malus's Law}
+
+For instance, say that you collected data on light intensity after traveling through a polarizer.  Then you would expect Malus's Law to hold:
+
+\[
+	I = I_0 \cos^2 \theta
+\]
+
+If you measured $I$ as a function of $\theta$, perhaps the goal is to calculate the value of $I_0$, or to verify that it indeed varies with $\cos^2 \theta$ rather than $\cos^2 a\theta$ for $a \neq 1$.  
+
+<<results="hide">>=
+## theta in degrees, I in lux. data taken from
+## http://www.physicslabs.umb.edu/Physics/sum13/182_Exp1_Sum13.pdf
+
+data.table = read.table(header = TRUE, text = 
+"theta  I
+0   24.45
+10  23.71
+20  21.59
+30  18.34
+40  14.35
+50  10.10
+60  6.11
+70  2.86
+80  0.74
+90  0.00")
+
+# convert to radians
+data.table$theta = data.table$theta * pi/180
+@
+
+Now, let's write the model to test the two parameters $I_0$ and $a$, and get an idea of what the scatter around Malus's Law is:
+
+<<results="hide">>=
+model_string = "
+  model {
+    ## priors:
+    a  ~ dunif(0,10)
+    I0 ~ dunif(0,50)
+    sigma ~ dunif(0,100)
+    
+    for (i in 1:length(theta)) {
+        I[i] ~ dnorm(I0 * (cos(a*theta[i]))^2, pow(sigma,-2))
+    }
+  }
+"
+model = jags.model(file = textConnection(model_string), 
+                   data = list('theta' = data.table$theta,
+                               'I' = data.table$I),
+                   n.chains = 1,
+                   n.adapt = 1000,
+                   inits = list('.RNG.name' = 'base::Mersenne-Twister', 
+                                '.RNG.seed' = 1))
+output = coda.samples(model = model,
+                      variable.names = c("a", "I0", "sigma"), 
+                      n.iter =10000,
+                      thin=1)
+@
+
+ 
+<<dev='png', dev.args=list(type="cairo"), dpi=200>>=
+plot(output)
+@
+
+Note the x-scales on the probability densities-- all of them are very tight, and it would appear that $a$ is certainly indistinguishable from $1$, and our measurements hardly deviate at all from Malus's Law predictions.  
+
+\subsubsection{Growing Signal}
+
+To give another example, one with more parameters, let's analyze a simulated time-varying voltage signal.  First, let's generate some data:
+
+<<fig.pos="H", fig.height=5, fig.width=5>>=
+N = 100
+A = 5
+w = 2
+d = 1.5
+sigma = 1
+
+t = seq(from = 0, 
+        to = 10, 
+        length.out = N)
+y = rnorm(N, 
+          A*t*cos(w*t + d), 
+          sigma)
+plot(t,y)
+@
+
+Note that now we have four parameters:  an amplitude, a frequency, a phase shift, and the noise.  The model is simple:
+
+<<results="hide", cache=TRUE>>=
+model_string = "
+model {
+    A ~ dunif(0,10)
+    w ~ dunif(0,10)
+    d ~ dunif(-3.14, 3.14)
+    sigma ~ dunif(0,10)
+
+    for (i in 1:length(t)) {
+        y[i] ~ dnorm(A*t[i]*cos(w*t[i] + d), pow(sigma, -2))
+    }
+}
+"
+model = jags.model(file = textConnection(model_string),
+                   data = list('t' = t,
+                               'y' = y),
+                   n.chains = 1,
+                   n.adapt = 1000)
+output = coda.samples(model = model,
+                      variable.names = c("A", "w", "sigma", "d"),
+                      n.iter = 10000,
+                      thin=1)
+@
+
+And the output is surprisingly good:
+
+<<dev='png', dev.args=list(type="cairo"), dpi=200>>=
+plot(output)
+@
+
+\subsubsection{The Slow Fourier Transform}
+
+Just for fun, let's see if we can emulate the Fourier Transform with JAGS.  First, let's make a plausible signal to transform.  Choose some random lattice points, then spline between them and sample the interpolation:
+
+<<fig.pos="H", fig.height=5, fig.width=5>>=
+set.seed(2)
+anchor.x = 1:10
+anchor.y = rnorm(10,0,0.5)
+
+x = seq(from=0,to=10,by=0.1)
+spline_values = spline(x = anchor.x, y = anchor.y, xout = x, method = "fmm")
+y = spline_values$y
+
+plot(anchor.x, anchor.y)
+lines(x,y)
+@
+
+Looks like a reasonable signal to analyze.  Now, let's assume that we can fit a model of the form
+
+\[
+	y(x) \approx \sum_{n=1}^5 \left[ a_n \sin(nx) + b_n \cos(nx) \right]
+\]
+
+This is going to be a pretty rough approximation, since we are only using 5 terms and not including the $n = 0$ contribution.  No matter.  Let's now define the model.  The values for $a_n$ and $b_n$ probably won't be too large, since the signal's amplitude is relatively small.  Hopefully, the difference between our approximated signal and the real thing will be relatively small as well. 
+
+<<results="hide", cache=TRUE>>=
+N_terms = 5
+
+model_string = "
+  model {
+    ## priors:
+    for(i in 1:N){
+        a[i] ~ dunif(-100,100)
+        b[i] ~ dunif(-100,100)
+    }
+    for(i in 1:length(x)) {
+        err[i] ~ dunif(0,100)
+    }
+
+    # loop over x
+    for (i in 1:length(x)) {
+        # loop over frequencies
+        for (j in 1:N){
+            y.hat[i,j] = a[j]*sin(j*x[i]) + b[j]*cos(j*x[i])
+        }
+        y[i] ~ dnorm(sum(y.hat[i,]), pow(err[i],-2))
+    }
+  }
+"
+
+model = jags.model(file = textConnection(model_string), 
+                   data = list('x' = x,
+                               'y' = y,
+                               'N' = N_terms),
+                   n.chains = 1,
+                   n.adapt = 1000,
+                   inits = list('.RNG.name' = 'base::Mersenne-Twister', 
+                                '.RNG.seed' = 1))
+
+output = coda.samples(model = model,
+                      variable.names = c("a", "b", "err"), 
+                      n.iter = 10000,
+                      thin=1)
+@
+
+This model is a bit of a mouthful, but should be understandable after some thought.  Now, let's calculate some values for the $a_n$ and $b_n$ and recreate the signal from each frequency component:
+
+<<>>=
+a = rep(0,N_terms)
+b = rep(0,N_terms)
+for(i in 1:N_terms){
+    a[i] = median(output[[1]][,i])
+    b[i] = median(output[[1]][,N_terms+i])
+}
+
+y2 = rep(0,length(x))
+for(i in 1:length(x)){
+    y2[i] = sum(a * sin((1:N_terms)*x[i]) + b * cos((1:N_terms)*x[i]))
+}
+@
+
+<<fig.pos="H", fig.height=5, fig.width=5>>=
+plot(x,y,type='l')
+lines(x,y2,col='red')
+@
+
+It's not that bad!  It is thoroughly impressive to me that such a sequence of bad approximations turned out to be so close to the original -- even if it takes a minute or three to crunch the numbers (thus, the ``Slow Fourier Transform").  This is by no means an appropriate use of JAGS, but it shows the flexibility of the package.  

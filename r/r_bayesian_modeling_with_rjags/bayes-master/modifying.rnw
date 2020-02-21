@@ -1,0 +1,696 @@
+\subsection{Overview}
+
+JAGS has the standard functions built into its model description language -- $\log$, $\sin$, etc.  However, more complex models may require custom domain-specific functions.  Unfortunately, JAGS doesn't provide a way to include custom functions if the function can't be implemented in the model itself as a combination of the builtins.  For instance, a nuclear physics model might require calculation of Coulomb wavefunctions with some given parameters.  Existing fortran codes exist for this, and they are a thousand lines or more long, meaning that implementing them in the model directly is not feasible.  
+
+This document shows the process of creating new JAGS functions that can be used in a model description.  They can use existing executables or be self-contained.  This involves recompiling JAGS with the new function added in, and so the process of installing dependencies, compilers, etc will also be covered. 
+
+This document was written for JAGS version 4.2.0, R version 3.0.2, and R packages rjags 4-6 and coda 0.18-1, running on Ubuntu 14.04.  It may be helpful for more recent versions of these packages, but things tend to change over time. 
+
+
+\subsection{Installing Dependencies}
+
+This was originally done on a remote VPS, but a standard personal computer will also suffice.  These instructions assume a Debian-based GNU/Linux OS, as I have no experience with writing code on Mac OSX or Windows computers.  
+
+First, if your computer does not have much ram, you may want to enable a swapfile.  This will allow your computer to start using hard drive space as a (much slower) replacement for ram if it runs out.  Running JAGS models is not very memory-intensive, but compiling the JAGS source code can take a decent amount.  This may not be necessary for you, but if you run into ``memory full" issues later, this is one solution.  The following commands at a bash terminal will create a 2GB swapfile that will persist until the computer next shuts down:
+
+\begin{verbatim}
+fallocate -l 2G /swapfile
+chmod 600 /swapfile
+mkswap /swapfile
+swapon /swapfile
+\end{verbatim}
+
+To make the swapfile persist across reboots, use
+
+\begin{verbatim}
+echo '/swapfile   none    swap    sw    0   0' >> /etc/fstab
+\end{verbatim}
+
+Now, onto the actual dependencies.  I started with a clean Ubuntu 14.04 installation. After installing R with 
+
+\begin{verbatim}
+sudo apt-get install r-base-core
+\end{verbatim}
+
+I installed the following packages to compile the JAGS source code:
+
+\begin{verbatim}
+sudo apt-get install make gcc g++ gfortran liblapack-dev r-base-core 
+sudo apt-get install autoconf automake libtool libltdl7-dev libcppunit-dev
+\end{verbatim}
+
+At the time of writing, JAGS is hosted on SourceForge.  The source code can be downloaded with a browser, and then unpacked with a file manager, or in the terminal:
+
+\begin{verbatim}
+wget 'https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Source/JAGS-4.2.0.tar.gz/download'
+tar -xvf download
+rm download
+\end{verbatim}
+
+Now, to compile and install JAGS without any modifications:
+
+\begin{verbatim}
+cd JAGS-4.2.0
+./configure
+make
+sudo make install
+\end{verbatim}
+
+If \verb|make| throws errors, it might be that the linking path is wrong.  If running the command 
+
+\begin{verbatim}
+/sbin/ldconfig -p | grep jags
+\end{verbatim}
+
+doesn't print anything, then open \verb|/etc/ld.so.conf| with your favorite text editor and insert the line 
+
+\begin{verbatim}
+include /usr/local/lib
+\end{verbatim}
+
+at the bottom.  Save the file, and run \verb|/sbin/ldconfig| to load the new configuration file.  Then try \verb|make| again.
+
+Finally, to install the R-language bindings to JAGS, 
+
+\begin{verbatim}
+Rscript -e "install.packages('rjags');"
+\end{verbatim}
+
+\subsection{JAGS functions}
+
+The JAGS source code defines several types of functions.  By looking in \verb|/JAGS-4.2.0/src/include/function|, you can see several class definition files -- \verb|ArrayFunction.h|, \verb|VectorFunction.h|, \verb|ScalarVectorFunction.h|, etc.  These describe the types of the function parameters and return variables -- \verb|ScalarVectorFunction| takes vector arguments and returns a scalar, for instance.  In our case, we wanted a function that accepts three scalar values and returns a 2-D array, so we chose to implement an \verb|ArrayFunction|.  Other function types will have different methods that need defining. 
+
+\subsection{ArrayFunction}
+
+\verb|ArrayFunction| defines several virtual methods that our code must implement.  They describe the inputs and outputs of the function in addition to what the function actually does. 
+
+\subsubsection{the constructor}
+
+If you look at \verb|ArrayFunction.h|, you can see that the constructor takes two parameters, a string \verb|name| and an unsigned int \verb|npar|.  These correspond to the name that you want to be able to use in JAGS model descriptions and the number of parameters that the function will take.  In our case, we want to call the function \verb|sfactor| and it takes three parameters.  
+
+\subsubsection{evaluate} 
+
+The first method is \verb|evaluate|, which defines the actual function definition.  It has the parameters of a double pointer \verb|value|, a vector of double pointers \verb|args|, and a vector of vectors of unsigned ints \verb|dims|.  The argument \verb|value| is a pointer to a region of memory for the return value -- because \verb|ArrayFunction| is supposed to be a very generic template, the specific details of how to use that memory is up to you.  Note:  JAGS arrays are stored in column-major order (like Fortran), not row-major order like C++ in general!  The size of this memory region is defined by the return value of the \verb|dim| function.
+
+The \verb|args| parameter contains the arguments that the model description gave to the function.  It is a vector of double pointers, and so each element of the vector can represent an array.  The dimensions of these arrays must be accepted by \verb|checkParameterDim|.  In our case, we want it to be three scalars, so each element of the \verb|args| vector should point to only one double value. 
+
+The \verb|dims| parameter provides the dimensions of the arrays in \verb|args|.  In our case, they should be all ones because our parameters are scalars, but in general they define the shape of the memory regions pointed to in \verb|args|.
+
+\subsubsection{checkParameterDim}
+
+The method \verb|checkParameterDim| checks whether the function parameters are correct.  It has one argument, a vector of vectors of unsigned ints \verb|dims|.  The outer vector has \verb|npar| (the parameter of the constructor) elements, and each subvector contains the dimensions of the corresponding argument to your function.  Our function accepts only scalars, so we use this function to check that all our arguments are scalars. 
+
+\subsubsection{checkParameterValue}
+
+The method \verb|checkParameterValue| is used to check whether the parameter values lie in the function's domain.  Our function did not require any constraints on the parameter values, so it always returned \verb|true|.
+
+\subsubsection{dim}
+
+The method \verb|dim| is used to tell JAGS how much memory to allocate for given input values.  In our case, we are outsourcing the calculations to a fortran code that returns a table with 99 rows and 2 columns, so we return a 2-element vector containing the values 99 and 2.
+
+\subsection{C++ Implementation}
+
+Now, onto the specifics of implementing a new function in C++.  All existing functions are located in 
+
+\begin{verbatim}
+JAGS-4.2.0/src/modules/bugs/functions
+\end{verbatim}
+
+and we will put our code there as well.  A JAGS function has two files:  a main \verb|.cc| file that defines the bodies of the functions mentioned above, and a header file \verb|.h| that is more or less just boilerplate.  To begin, it is easiest to copy the \verb|.cc| and \verb|.h| files of a function that already exists and is the same type as yours.  We want an \verb|ArrayFunction|, and so we could copy, for instance, \verb|Transpose.cc| and \verb|Transpose.h|, because \verb|Tranpose| inherits from \verb|ArrayFunction|.  Note: when in \verb|JAGS-4.2.0/src/modules/bugs/functions/|, you can use \verb|grep ArrayFunction *| to find all functions that contain the phrase ``ArrayFunction".  
+
+After copying an existing function, we can modify the new files to fit our needs.  In \verb|SFactor.cc| and \verb|SFactor.h|, the first thing to do is change all the \verb|Transpose|s to \verb|SFactor|s, so that \verb|#include "Transpose.h"| turns into \verb|#include "SFactor.h"|, \verb|Transpose::evaluate| becomes \verb|SFactor::evaluate|, and so on.  The method parameters and return types should all stay the same.  
+
+\subsubsection{SFactor.cc}
+
+Now let's talk about method bodies.  The methods are more or less independent, and so we'll discuss their implementation individually. 
+
+\paragraph{the constructor}
+
+Our JAGS function will be named \verb|sfactor| and will take three parameters, so we define our constructor as 
+
+\begin{verbatim}
+	SFactor::SFactor ()
+        : ArrayFunction ("sfactor", 3)
+    {
+    }
+\end{verbatim}
+
+\paragraph{evaluate}
+
+\verb|evaluate| is the big function.  Our objective is to provide a bridge between JAGS and an existing pre-compiled Fortran77 executable binary.  The executable has an input file that contains all the parameter values used in the calculation and creates an output file with the 99x2 table of calculated values.   The idea of this method is to create the input file with the three parameter values given to it by JAGS, execute the binary, and parse the table from the output file to return to JAGS. 
+
+Because we'll be reading and writing files, we'll need a few libraries.  At the top of \verb|SFactor.cc|, we have the following lines:
+
+\begin{verbatim}
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <stdlib.h>
+\end{verbatim}
+
+First, we have to get the three parameter values.  Recall that \verb|args| is a vector of double pointers.  In our case, these pointers are pointing to single values (or equivalently, 1x1 arrays), so to access them, we simply use
+
+\begin{verbatim}
+        double resonance_energy = args[0][0];
+        double proton_width     = args[1][0];
+        double gamma_width      = args[2][0];
+\end{verbatim}
+
+Now, we write them to the binary's input file, called ``extrappg.in".  The file also contains values for many other parameters, but those are treated as constants in this analysis, so we will hardcode them.  The input file is assumed to be in a certain order, which must be preserved by this code:
+
+\begin{verbatim}
+        // open the fortran input file for writing
+        std::ofstream paramfile;
+        paramfile.open ("extrappg.in");
+        paramfile << "17O+p           ! title\n";
+        paramfile << "17 1.0078       ! mass target, projectile MT,MP\n";
+        paramfile << "8 1             ! charge target, projectile ZT,ZP\n";
+        paramfile << "1.25            ! radius parameter r0 (fm) R0\n";
+        paramfile <<  resonance_energy << "         ! resonance energy (MeV) ER ***\n";
+        paramfile << "2.5 0.5 2.0     ! spins target, projectile, resonance JT,JP,JR\n";
+        paramfile << "5.6065          ! reaction Q-value (MeV) Q\n";
+        paramfile << "1               ! orbital angular momentum of resonance LP\n";
+        paramfile <<  proton_width << "          ! proton width at ER (MeV) GAMP ***\n";
+        paramfile <<  gamma_width << "          ! gamma widths at ER (MeV) GAMG ***\n";
+        paramfile << "0.00            ! proton spectroscopic factor C2S\n";
+        paramfile << "0.00            ! dim. single-particle reduced width at ER (formal) THSP\n";
+        paramfile << "1.887           ! excitation energy of final state (MeV) EXF\n";
+        paramfile << "1.00            ! gamma-ray branching ratio BG\n";
+        paramfile << "1               ! gamma-ray multipolarity LG\n";
+        paramfile << "0.02 1.0 0.01   ! start energy, final energy, step size (MEV) ES,EF,SS\n";
+        paramfile << "0               ! (1) exact calculation; (else) Thomas approximation;\n";
+        paramfile.close();
+\end{verbatim}
+
+Now that the input file is written, we can run the external executable, which we assume is called \verb|s_factor|.  It is assumed to be in the same working directory as your R session.  If this is not the case, you'll have to provide a full filepath to it.
+
+\begin{verbatim}
+        // now that the parameter file is written, run the fortran executable
+        int retcode = system("./s_factor");
+\end{verbatim}
+
+The return value \verb|retcode| signals whether the process completed successfully or exited with an error.  In true bad-practice style, we'll ignore it here. Note that calling outside executables in this way will have our code wait until the external process finishes and returns.  In this case, this is exactly what we want.  
+
+Now, we must read the table of values from the Fortran's output file, called \verb|extrappg.out|.  The output file contains 14 lines of diagnostic info before getting to the table, at which point it has 99 lines of data, each line containing two numbers separated by a space.  
+
+\begin{verbatim}
+//read the fortran executable's output file:
+        std::string line;
+        std::ifstream ifile ("extrappg.out");
+        if (ifile.is_open()) {
+            // skip the first 14 lines
+            for(int i = 0; i < 14; i++){
+                getline(ifile, line);
+            }
+            // read 99 lines.  Each line contains two numbers separated by a space.
+            // `value` is a 1-D array, so we need to do some tricky indexing.
+            // IMPORTANT: JAGS stores arrays in column-major order, so entire columns
+            // are stored in contiguous memory.  Unlike C/C++, which is row-major.
+            // You will tear your hair out if you don't know this.
+            for(int i = 0; i < 99; i++){
+                ifile >> value[i] >> value[i+99];
+            }
+            ifile.close();
+        }
+        else {
+            // it's bad if this happens
+            // TODO: figure out how to throw an error
+            std::cout << "Unable to open file"; 
+        }
+\end{verbatim}
+
+This deserves some explanation.  Because the block of memory represented by \verb|value| is given to us as a pointer, rather than a 2-D array, we have to do manual memory indexing to make sure all values go where they are supposed to go.  Because JAGS arrays are stored in column-major format, each column of a 2-D array is stored in contiguous memory.  Therefore, if we want to return a 99-row, 2-column array, it must be represented as a chunk of 99 values for the first column, followed by a chunk of 99 values for the second column.  Note that we are guaranteed to have sufficient memory for this indexing because of what the \verb|dim| method returns.  
+
+\paragraph{checkParameterDim}
+
+The method \verb|checkParameterDim| must ensure that our parameters are scalar values.  JAGS has a few handy libraries around to check these sorts of things.  We will use a function called \verb|isScalar| from \verb|dim.h|, in
+
+\begin{verbatim}
+JAGS-4.2.0/src/include/util/dim.h
+\end{verbatim}
+
+This requires adding a line  \verb|#include <util/dim.h>| at the top of \verb|SFactor.cc|.  Implementing this method now becomes very easy:
+
+\begin{verbatim}
+ bool
+    SFactor::checkParameterDim(std::vector<std::vector<unsigned int> > const &dims) const
+    {
+        // the three arguments should be scalars
+        return isScalar(dims[0]) && isScalar(dims[1]) && isScalar(dims[2]);
+    }
+\end{verbatim}
+
+Note that many other useful functions can be found in \verb|JAGS-4.2.0/src/include|; have a look around in there before reinventing a wheel yourself. 
+
+\paragraph{checkParameterValue}
+
+Our function has no restrictions on parameter values (strictly positive, nonnegative, etc), so this function always returns true.  In general, you would have some logical expression involving the parameter values that evaluates to a boolean. 
+
+\begin{verbatim}
+    bool
+    SFactor::checkParameterValue(std::vector<double const *> const &args,
+                                 std::vector<std::vector<unsigned int> > const &dims) const
+        {
+            // TODO: should any parameters be eg strictly positive?
+            return true;
+        }
+\end{verbatim}
+
+\paragraph{dim}
+
+\verb|dim| tells JAGS what the dimensions of the output of \verb|evaluate| should be.  In our case, we know that we will be returning a 2-D, 99x2 array of doubles.  \verb|dim| returns a vector of unsigned ints, with each element corresponding to a dimension of an array.  By convention, it seems that JAGS code assumes dimension vectors to contain first the number of rows, and then the number of columns, and so our \verb|dim| will look like
+
+\begin{verbatim}
+    std::vector<unsigned int> 
+    SFactor::dim(std::vector <std::vector<unsigned int> > const &dims,
+                 std::vector <double const *> const &values) const
+    {
+        // the size of the table that the fortran code calculates is 99 row by 2 col
+        vector<unsigned int> ans(2);
+        ans[0] = 99;
+        ans[1] = 2;
+        return ans;
+    }
+\end{verbatim}
+
+
+
+
+\subsubsection{SFactor.h}
+
+The header file is much easier to implement.  More or less just changing everything to fit your function's name is all that's necessary.  Also, be sure that the \verb|#ifndef| line has a unique identifier that won't match any other function's. 
+
+\subsection{Recompiling JAGS}
+
+Now that you've defined a function that JAGS can talk to, we have to tell JAGS about it.  At the time of writing, there are two configuration files that must be edited.  The first is found in 
+
+\begin{verbatim}
+JAGS-4.2.0/src/modules/bugs/functions/Makefile.am
+\end{verbatim}
+
+This file is a template used to generate a real makefile during the compilation process.  Any functions you create that you want to be available in a JAGS model description must be listed here.  There are two long lists in this file, one for \verb|.cc| files and one for \verb|.h| files.  Just append your two new files to the ends of these lists.  
+
+The second file that requires editing is 
+
+\begin{verbatim}
+JAGS-4.2.0/src/modules/bugs/bugs.cc
+\end{verbatim}
+
+This file is a long list of \verb|#include| statements.  Scrolling down the file, there will be a list of all the functions we saw before, with lines like \verb|#include <functions/Transpose.h>|.  Add a similar line for your \verb|.h| file in this list (eg, \verb|#include <functions/SFactor.h>|).  
+
+Then, farther down the file, there will be a long list of lines like \verb|insert(new Transpose);|.  Add a new line for your function (eg, \verb|insert(new SFactor);|). 
+
+After editing these two files, go back to the top level of the JAGS directory (\verb|JAGS-4.2.0| here), and run \verb|autoreconf --force --install| to regenerate new configuration files from the templates you just edited.  Then run the \verb|configure| program in this directory with \verb|./configure|.  After this, we are done configuring, and can proceed with \verb|make| and \verb|sudo make install| as before. 
+
+Note that the \verb|autoreconf --force --install| and \verb|./configure| only need to be done after you edit the configuration templates \verb|Makefile.am| and \verb|bugs.cc|.  After doing this once, you can skip those steps if you edit your new function's \verb|.cc| and \verb|.h| files and go straight to the \verb|make| and \verb|sudo make install|.  After this, using the \verb|rjags| library in R will point to the new custom version of JAGS. 
+
+\subsection{Appendix}
+
+\subsubsection{Timings}
+
+As a test, we used the \verb|extrappg| Fortran binary to generate an output table for known parameters.  Some noise was then added to the data and used in JAGS to try to recreate the original parameter values. The code and results are shown below:
+
+\begin{verbatim}
+library(rjags)
+
+# parameters used to generate the data:
+# MT,MP,ZT,ZP    = 17. 1. 9. 1.
+# R0 (fm)        =1.25
+# LP,LG          =  0  1
+# GAMP,GAMG (MeV)=  .180E-01  .250E-07
+# ER,Q,EXF (MeV) =   .600  3.924  1.887
+# JT,JP,JR       =2.5 .53.0
+# THSP,C2S       =   .000   .000
+# BG             = 1.0000
+
+# so the analysis should return 
+# ER = 0.600
+# GAMP = 0.180e-01
+# GAMG = 0.250e-07
+
+df1 = read.table(header = TRUE, text = 
+"     E            S
+  0.020       4.883E-06
+   0.030       5.110E-06
+   0.040       5.351E-06
+   0.050       5.607E-06
+   0.060       5.878E-06
+   0.070       6.166E-06
+   0.080       6.473E-06
+   0.090       6.799E-06
+   0.100       7.147E-06
+   0.110       7.518E-06
+   0.120       7.914E-06
+   0.130       8.338E-06
+   0.140       8.792E-06
+   0.150       9.279E-06
+   0.160       9.802E-06
+   0.170       1.036E-05
+   0.180       1.097E-05
+   0.190       1.162E-05
+   0.200       1.233E-05
+   0.210       1.310E-05
+   0.220       1.393E-05
+   0.230       1.483E-05
+   0.240       1.581E-05
+   0.250       1.688E-05
+   0.260       1.806E-05
+   0.270       1.935E-05
+   0.280       2.076E-05
+   0.290       2.233E-05
+   0.300       2.406E-05
+   0.310       2.597E-05
+   0.320       2.811E-05
+   0.330       3.050E-05
+   0.340       3.318E-05
+   0.350       3.620E-05
+   0.360       3.962E-05
+   0.370       4.352E-05
+   0.380       4.797E-05
+   0.390       5.310E-05
+   0.400       5.903E-05
+   0.410       6.596E-05
+   0.420       7.410E-05
+   0.430       8.376E-05
+   0.440       9.533E-05
+   0.450       1.093E-04
+   0.460       1.265E-04
+   0.470       1.479E-04
+   0.480       1.750E-04
+   0.490       2.098E-04
+   0.500       2.558E-04
+   0.510       3.180E-04
+   0.520       4.052E-04
+   0.530       5.324E-04
+   0.540       7.281E-04
+   0.550       1.050E-03
+   0.560       1.635E-03
+   0.570       2.849E-03
+   0.580       5.948E-03
+   0.590       1.628E-02
+   0.600       3.410E-02
+   0.610       1.423E-02
+   0.620       5.471E-03
+   0.630       2.737E-03
+   0.640       1.622E-03
+   0.650       1.069E-03
+   0.660       7.575E-04
+   0.670       5.651E-04
+   0.680       4.381E-04
+   0.690       3.499E-04
+   0.700       2.861E-04
+   0.710       2.385E-04
+   0.720       2.021E-04
+   0.730       1.735E-04
+   0.740       1.507E-04
+   0.750       1.323E-04
+   0.760       1.170E-04
+   0.770       1.044E-04
+   0.780       9.370E-05
+   0.790       8.463E-05
+   0.800       7.686E-05
+   0.810       7.013E-05
+   0.820       6.428E-05
+   0.830       5.916E-05
+   0.840       5.465E-05
+   0.850       5.065E-05
+   0.860       4.709E-05
+   0.870       4.390E-05
+   0.880       4.104E-05
+   0.890       3.846E-05
+   0.900       3.613E-05
+   0.910       3.401E-05
+   0.920       3.208E-05
+   0.930       3.031E-05
+   0.940       2.870E-05
+   0.950       2.721E-05
+   0.960       2.584E-05
+   0.970       2.458E-05
+   0.980       2.341E-05
+   0.990       2.233E-05
+   1.000       2.132E-05")
+
+
+sigma = 0.001
+x = df1$E
+y = rnorm(length(x), df1$S, sigma)
+
+# so the analysis should return
+# ER = 0.600
+# GAMP = 0.180e-01
+# GAMG = 0.250e-07
+
+model_string = "
+model {
+    ER ~ dunif(0.5,0.7)
+    GAMP ~ dunif(0.1e-01, 0.2e-01)
+    GAMG ~ dunif(0.1e-07, 0.3e-07)
+    # sigma is zero if it gets the other parameters right
+    sigma ~ dunif(0,10)
+
+    # a 99x2 table of E and S(E)
+    table = sfactor(ER, GAMP, GAMG)
+    
+    for (i in 1:length(E)) {
+        S.hat[i] = interp.lin(E[i], table[1:99,1], table[1:99,2])
+        S[i] ~ dnorm(S.hat[i], pow(sigma,-2))
+    }
+}
+"
+
+model = jags.model(file = textConnection(model_string),
+                   data = list('E' = x,
+                               'S' = y),
+                   n.chains = 1,
+                   n.adapt = 1000)
+
+output = coda.samples(model = model,
+                      variable.names = c("ER", "GAMP", "GAMG", "sigma"),
+                      n.iter=3000,
+                      thin=1)
+
+\end{verbatim}
+
+The quantiles of the parameter values are shown below.  Note that they nicely include the original true parameter values of ER = 0.600, GAMG = 0.250e-07, GAMP = 0.180e-01, and sigma = 1e-3.
+
+\begin{verbatim}
+           2.5%       25%       50%       75%     97.5%
+ER    5.995e-01 6.001e-01 6.004e-01 6.007e-01 6.012e-01
+GAMG  2.308e-08 2.422e-08 2.489e-08 2.556e-08 2.675e-08
+GAMP  1.600e-02 1.693e-02 1.748e-02 1.802e-02 1.900e-02
+sigma 9.454e-04 1.034e-03 1.084e-03 1.137e-03 1.262e-03
+\end{verbatim}
+
+ I ran this code on a single-core, 1GB ram computer with a solid-state harddrive.  The model consumed a pretty small amount of ram, and as we discussed, it consumed about 20-25\% CPU, indicating that 75-80\% of its time is spent on filesystem operations rather than direct cpu calculations.  I used 3000 iterations, and the timings were
+
+\begin{verbatim}
+real 4m42.614s
+user 1m8.469s
+sys 3m29.102s
+\end{verbatim}
+
+\subsubsection{Code}
+
+For reference, the complete \verb|SFactor.cc| and \verb|SFactor.h| files are included here:
+
+SFactor.cc:
+
+\begin{verbatim}
+#include "SFactor.h"
+#include <config.h>
+
+#include <cmath>
+
+// isScalar()
+#include <util/dim.h>
+
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <stdlib.h>
+
+using std::vector;
+
+namespace jags {
+namespace bugs {
+
+/**
+ * @short Matrix- or array-valued function
+ *
+ * Array-valued functions are the most general class of function. The
+ * arguments of an array-valued function, and the value may be a
+ * scalar, vector, or array.
+ *
+ * We use ArrayFunction here because there is no more specific class
+ * that accepts scalars and returns vectors
+ */
+
+    SFactor::SFactor ()
+        : ArrayFunction ("sfactor", 3)
+    {
+    }
+
+
+    /**
+     * Evaluates the function. 
+     *
+     * @param value array of doubles which contains the result of
+     * the evaluation on exit 
+     * @param args Vector of arguments. 
+     * @param dims Respective dimensions of each element of args.
+     */
+    void
+    SFactor::evaluate(double *value, 
+                      std::vector<double const *> const &args,
+                      std::vector<std::vector<unsigned int> > const &dims) const
+    {
+        // parameters to be written to the fortran input file
+        double resonance_energy = args[0][0];
+        double proton_width     = args[1][0];
+        double gamma_width      = args[2][0];
+
+        // open the fortran input file for writing
+        std::ofstream paramfile;
+        paramfile.open ("extrappg.in");
+
+        paramfile << "17O+p           ! title\n";
+        paramfile << "17 1.0078       ! mass target, projectile MT,MP\n";
+        paramfile << "8 1             ! charge target, projectile ZT,ZP\n";
+        paramfile << "1.25            ! radius parameter r0 (fm) R0\n";
+        paramfile <<  resonance_energy << "         ! resonance energy (MeV) ER ***\n";
+        paramfile << "2.5 0.5 2.0     ! spins target, projectile, resonance JT,JP,JR\n";
+        paramfile << "5.6065          ! reaction Q-value (MeV) Q\n";
+        paramfile << "1               ! orbital angular momentum of resonance LP\n";
+        paramfile <<  proton_width << "          ! proton width at ER (MeV) GAMP ***\n";
+        paramfile <<  gamma_width << "          ! gamma widths at ER (MeV) GAMG ***\n";
+        paramfile << "0.00            ! proton spectroscopic factor C2S\n";
+        paramfile << "0.00            ! dim. single-particle reduced width at ER (formal) THSP\n";
+        paramfile << "1.887           ! excitation energy of final state (MeV) EXF\n";
+        paramfile << "1.00            ! gamma-ray branching ratio BG\n";
+        paramfile << "1               ! gamma-ray multipolarity LG\n";
+        paramfile << "0.02 1.0 0.01   ! start energy, final energy, step size (MEV) ES,EF,SS\n";
+        paramfile << "0               ! (1) exact calculation; (else) Thomas approximation;\n";
+
+        paramfile.close();
+
+        // now that the parameter file is written, run the fortran executable
+        int retcode = system("./s_factor");
+
+        //read the fortran executable's output file:
+        std::string line;
+        std::ifstream ifile ("extrappg.out");
+        if (ifile.is_open()) {
+            // skip the first 14 lines
+            for(int i = 0; i < 14; i++){
+                getline(ifile, line);
+            }
+            // read 99 lines.  Each line contains two numbers separated by a space.
+            // `value` is a 1-D array, so we need to do some tricky indexing.
+            // IMPORTANT: JAGS stores arrays in column-major order, so entire columns
+            // are stored in contiguous memory.  Unlike C, which is row-major.
+            // You will tear your hair out if you don't know this.
+            for(int i = 0; i < 99; i++){
+                ifile >> value[i] >> value[i+99];
+            }
+            ifile.close();
+        }
+        else {
+            // it's really bad if this happens
+            // TODO: figure out how to throw an error
+            std::cout << "Unable to open file"; 
+        }
+    }
+
+
+    /**
+     * Checks whether dimensions of the function parameters are correct.  
+     *
+     * @param dims Vector of length npar denoting the dimensions of
+     * the parameters, with any redundant dimensions dropped.
+     */
+    bool
+    SFactor::checkParameterDim(std::vector<std::vector<unsigned int> > const &dims) const
+    {
+        // the three arguments should be scalars
+        return isScalar(dims[0]) && isScalar(dims[1]) && isScalar(dims[2]);
+    }
+
+
+
+    /**
+     * Checks whether the parameter values lie in the domain of the
+     * function. The default implementation returns true.
+     */
+    bool
+    SFactor::checkParameterValue(std::vector<double const *> const &args,
+                                 std::vector<std::vector<unsigned int> > const &dims) const
+        {
+            // TODO: should any parameters be eg strictly positive?
+            return true;
+        }
+
+
+    /**
+     * Calculates what the dimension of the return value should be,
+     * based on the arguments. 
+     *
+     * @param dims Vector of Indices denoting the dimensions of the
+     * parameters. This vector must return true when passed to
+     * checkParameterDim.
+     *
+     * @param values Vector of pointers to parameter values.
+     */
+    std::vector<unsigned int> 
+    SFactor::dim(std::vector <std::vector<unsigned int> > const &dims,
+                 std::vector <double const *> const &values) const
+    {
+        // the size of the table that the fortran code calculates is 99 row by 2 col
+        vector<unsigned int> ans(2);
+        ans[0] = 99;
+        ans[1] = 2;
+        return ans;
+    }
+
+}}
+\end{verbatim}
+
+\hrule
+\vspace{8pt}
+
+SFactor.h:
+
+\begin{verbatim}
+#ifndef S_FACTOR_H_
+#define S_FACTOR_H_
+
+#include <function/ArrayFunction.h>
+
+namespace jags {
+namespace bugs {
+
+    /**
+     * @short Astronomical S Factors 
+     * SFactor returns the astronomical S-factor as a function of energy.  It 
+     * returns a 99x2 table where column 1 is energy and column 2 is the S-factor.
+     * It requires a fortran executable to perform the calculations. 
+     * <pre>
+     * table = sfactor(ER, GAMP, GAMG)
+     * </pre>
+     */
+    class SFactor : public ArrayFunction
+    {
+    public:
+        SFactor ();
+        void evaluate(double *x, std::vector<double const *> const &args,
+                      std::vector<std::vector<unsigned int> > const &dims) 
+            const;
+        bool checkParameterDim(std::vector<std::vector<unsigned int> > const &dims) const;
+        std::vector<unsigned int>
+            dim(std::vector<std::vector<unsigned int> > const &dims,
+                std::vector<double const *> const &values) const;
+        bool checkParameterValue(std::vector<double const *> const &args,
+                                 std::vector<std::vector<unsigned int> > const &dims) const;
+    };
+
+}}
+\end{verbatim}

@@ -1,0 +1,148 @@
+Systematic error is something that is typically difficult to deal with in statistical analysis, but is easy here.  First, let's examine the case when the systematic error is proportional to \code{x}.  Imagine we have two data sets with qualitatively different slopes:
+ 
+<<fig.width=6, fig.height=5>>=
+## generate some data
+slope = 2
+intercept = 5
+
+N1 = 20
+shift1 = 0.7;
+obs_x1 = runif(N1,0,10)
+err_y1 = runif(N1, 0.1, 0.2)
+obs_y1 = shift1 * rnorm(N1, slope * obs_x1 + intercept, err_y1)
+
+N2 = 30
+shift2 = 1.3;
+obs_x2 = runif(N2,0,10)
+err_y2 = runif(N2, 0.1, 0.2)
+obs_y2 = shift2 * rnorm(N2, slope * obs_x2 + intercept, err_y2)
+
+plot(obs_x1, obs_y1, xlim = c(0,10),ylim = c(4,35), xlab = "x", ylab = "y")
+points(obs_x2, obs_y2, pch=19)
+segments(obs_x1, obs_y1 - 2*err_y1, obs_x1, obs_y1 + 2*err_y1)
+segments(obs_x2, obs_y2 - 2*err_y2, obs_x2, obs_y2 + 2*err_y2)
+@
+
+This could be caused by, say, the result of a lab instrument that became miscalibrated between the data collections.  Some researchers would take a weighted average of some kind to combine the two datasets, but that method is statistically dubious at best.  Let's construct and run a model that includes a multiplicative factor for the two datasets:
+
+<<results="hide", cache=TRUE>>=
+model_string = "
+  model {
+    ## priors:
+    a ~ dunif(0,5)
+    b ~ dunif(-10,10)
+    ## shifts must be > 0. Choose centered near 1 (0% shift), with ~0.1 = 10% spread
+    multiplier1 ~ dlnorm(log(1.0), pow(log(1.1),-2))
+    multiplier2 ~ dlnorm(log(1.0), pow(log(1.1),-2))
+    
+    ## structure:
+    for (i in 1:length(obs_x1)) {
+        y1[i] = multiplier1 * (a*obs_x1[i] + b)
+        obs_y1[i] ~ dnorm(y1[i], pow(err_y1[i],-2))
+    }
+    for (i in 1:length(obs_x2)) {
+        y2[i] = multiplier2 * (a*obs_x2[i] + b)
+        obs_y2[i] ~ dnorm(y2[i], pow(err_y2[i],-2))
+    }
+  }
+"
+
+model = jags.model(file = textConnection(model_string), 
+                   data = list('obs_x1' = obs_x1,
+                               'obs_x2' = obs_x2,
+                               'obs_y1' = obs_y1,
+                               'obs_y2' = obs_y2,
+                               'err_y1' = err_y1,
+                               'err_y2' = err_y2),
+                   n.chains = 1,
+                   n.adapt = 1000,
+                   inits = list('.RNG.name' = 'base::Mersenne-Twister', 
+                                '.RNG.seed' = 1))
+
+output = coda.samples(model = model,
+                      variable.names = c("a", "b", "multiplier1", "multiplier2"), 
+                      n.iter=500000,
+                      #n.iter =10000,
+                      thin=1)
+@
+
+Note that the number of iterations has been increased to 500,000 from the standard 10,000.  This model's added complexity required more iterations for the Markov chains to converge.  The posterior distributions are amazingly accurate:
+ 
+<<dev='png', dev.args=list(type="cairo"), dpi=200, cache=TRUE>>=
+plot(output)
+@
+
+The slope, intercept, and both systematic error multipliers are all centered exactly on their true values.  Now, let's look at an additive systematic error.  Imagine we have two datasets, each with a positive systematic error (implying that taking a weighted average would not help very much).
+
+<<fig.width=6, fig.height=5>>=
+## generate some data
+slope = 2
+intercept = 5
+
+N1 = 20
+shift1 = 1.5;
+obs_x1 = runif(N1,0,10)
+err_y1 = runif(N1, 0.1, 0.2)
+obs_y1 = shift1 + rnorm(N1, slope * obs_x1 + intercept, err_y1)
+
+N2 = 30
+shift2 = 3;
+obs_x2 = runif(N2,0,10)
+err_y2 = runif(N2, 0.1, 0.2)
+obs_y2 = shift2 + rnorm(N2, slope * obs_x2 + intercept, err_y2)
+
+plot(obs_x1, obs_y1, xlim = c(0,10),ylim = c(5,25), xlab = "x", ylab = "y")
+points(obs_x2, obs_y2, pch=19)
+segments(obs_x1, obs_y1 - 2*err_y1, obs_x1, obs_y1 + 2*err_y1)
+segments(obs_x2, obs_y2 - 2*err_y2, obs_x2, obs_y2 + 2*err_y2)
+@
+
+The model will be similar to before:
+
+<<results="hide", cache=TRUE>>=
+model_string = "
+  model {
+    ## priors:
+    a ~ dunif(0,5)
+    b ~ dunif(-10,10)
+    shift1 ~ dnorm(0, 1)
+    shift2 ~ dnorm(0, 1)
+    
+    ## structure:
+    for (i in 1:length(obs_x1)) {
+        y1[i] = shift1 + (a*obs_x1[i] + b)
+        obs_y1[i] ~ dnorm(y1[i], pow(err_y1[i],-2))
+    }
+    for (i in 1:length(obs_x2)) {
+        y2[i] = shift2 + (a*obs_x2[i] + b)
+        obs_y2[i] ~ dnorm(y2[i], pow(err_y2[i],-2))
+    }
+  }
+"
+
+model = jags.model(file = textConnection(model_string), 
+                   data = list('obs_x1' = obs_x1,
+                               'obs_x2' = obs_x2,
+                               'obs_y1' = obs_y1,
+                               'obs_y2' = obs_y2,
+                               'err_y1' = err_y1,
+                               'err_y2' = err_y2),
+                   n.chains = 1,
+                   n.adapt = 1000,
+                   inits = list('.RNG.name' = 'base::Mersenne-Twister', 
+                                '.RNG.seed' = 1))
+
+output = coda.samples(model = model,
+                      variable.names = c("a", "b", "shift1", "shift2"), 
+                      n.iter = 500000, 
+                      thin=1)
+@
+
+Again the number of iterations has been increased to 500,000. 
+ 
+<<dev='png', dev.args=list(type="cairo"), dpi=200, cache=TRUE>>=
+plot(output)  
+@
+
+This time, the results are rather disappointing.  The systematic error posteriors are not centered near the true values at all. The intercept posterior has been shifted as well.  This is not too unexpected-- we didn't give it much to work with, and really no additive shift would be unreasonable to report here.  
+

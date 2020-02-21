@@ -1,0 +1,106 @@
+\documentclass{article}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{xcolor}
+\usepackage[colorinlistoftodos]{todonotes}
+\usepackage{hyperref}
+\usepackage{listings}
+
+% allow \paragraph to act as subsubsubsection:
+\setcounter{secnumdepth}{5}
+
+\title{An Introduction to using JAGS for Bayesian Regression Analysis}
+\author{Kevin Anderson\\ Supervised by Christian Iliadis }
+
+\newcommand{\code}[1]{\colorbox{gray!8}{\let~\textasciitilde\texttt{#1}}}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+
+<<echo=F>>=
+## see http://tex.stackexchange.com/questions/148188/knitr-xcolor-incompatible-color-definition
+knit_hooks$set(document = function(x) {sub('\\usepackage[]{color}', '\\usepackage{xcolor}', x, fixed = TRUE)})
+
+# put a dollar sign here if the syntax highlighter is stupid: $
+@
+
+\section{Preface}
+
+This paper is an introduction to constructing Bayesian regression models using the R programming language and the R package rjags.  Familiarity with the R language and basic statistical background (means, standard deviations, etc) are necessary to understand the material.  
+
+The intent of this paper is to show how easy it is to fit complex regression models to experimental data with rjags.  The techniques applied in this paper are surprisingly powerful, given their simplicity. 
+
+<<echo=F>>=
+cat('Last modified on ')
+cat(date())
+cat('rjags info:')
+library('rjags')
+sessionInfo()
+@
+
+\section{Background}
+
+\subsection{Bayes' Theorem}
+
+First, some notation:  for an event $A$, the probability of the event occurring is given by $P(A)$.  For instance, the probabilities of an unbiased coin flip can be written as $P(\mathrm{heads}) = 0.5$ and $P(\mathrm{tails}) = 0.5$.  
+
+In many cases, we wish to know the conditional probability of an event. $P(A|B)$ represents the probability of event $A$ occurring, given that event $B$ occurs.  To give an example of the difference between this and standard probability, if today is Wednesday (event $A$), the probability of tomorrow being Thursday (event $B$) is $P(B|A) = 1$, while without the condition, the probability is random: $P(B) = 1/7$. 
+
+The whole subject of Bayesian Inference rests on a mathematical rule called Bayes' theorem:
+
+\[
+    P(H|E) = \frac{P(E|H) P(H)}{P(E)}
+\]
+
+Here, $H$ stands for a hypothesis to be tested and $E$ stands for the evidence (data).  The right side contains three terms.  $P(E|H)$ is the likelihood of measuring the evidence, assuming that the hypothesis is true.  The two probabilities $P(H)$ and $P(E)$ are called priors or prior distributions and represent relevant knowledge beyond the dataset itself.  They are called ``priors" because we know these probabilities before doing the analysis.  
+
+The left side of Bayes' theorem reads ``The probability of $H$ given the evidence", which represents exactly what we are interested in -- how likely is this hypothesis, according to the data that we collected?  This probability is known as the posterior or the posterior distribution.  In this paper, we'll focus on fitting model parameters to datasets, and so what we are interested in are real numbers: slopes, intercepts, standard deviations, etc.  These of course lie on the real axis and are continuous, and so the posterior for some model will be probability distributions for each parameter.   
+
+In general, each of these terms can be arbitrarily complex, and so actually using Bayes' theorem for analytic calculation is often impractical.  To get around this, we use a numerical technique called Markov Chain Monte Carlo. 
+
+\subsection{MCMC}
+
+Monte Carlo methods are algorithms that use randomly generated numbers to estimate numbers that are too hard to calculate analytically.  A common use case for Monte Carlo techniques is evaluating complex multidimensional integrals.  We won't cover the theory of Markov Chain Monte Carlo here, as many resources are available for this.  Suffice to say, we will generate Markov Chains from which the posterior distributions can be calculated. 
+ 
+\section{Bayesian Regression}
+
+\subsection{Basic Linear Model}
+
+<<child='model_1.rnw'>>=
+@
+ 
+\subsection{Linear Model with Error Bars}
+ 
+<<child='model_2.rnw'>>=
+@
+
+\subsection{Linear Model with Multiple Datasets and Systematic Error}
+
+<<child='model_3.rnw'>>=
+@ 
+
+\subsection{Nonlinear models}
+
+<<child='model_4.rnw'>>=
+@
+
+\section{Choosing a Prior}
+
+<<child='priors.rnw'>>=
+@
+
+\section{Notes}
+
+There are a few tricks to help get good results with JAGS.  For example, the time-varying signal had a phase shift included, and the prior was chosen to be \code{dunif(-3.14,3.14)} rather than \code{dunif(0,6.28)}.  Sometimes, the Markov Chain can ``get stuck" and fail to sample accurately, and the choice of prior can affect this.  
+
+Another way to avoid this problem is by specifying reasonable initial values for each parameter with the \code{inits} variable.  If you do not specify the initial value for a parameter, JAGS will try to pick an appropriate starting value.  It usually works well, but can fail for some models. 
+
+\section{Modifying JAGS}
+
+<<child='modifying.rnw'>>=
+@
+
+\end{document}
