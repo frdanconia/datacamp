@@ -1,0 +1,16 @@
+^_pkgdown\.yml$
+^CRAN-RELEASE$
+^.*\.Rproj$
+^\.Rproj\.user$
+^extra_functions$
+^src/*\.o$
+^src/*\.so$
+^src/*\.dll$
+^ToDo\.numbers$
+^cran-comments.md$
+^\.gitignore$
+^models_*
+^data/nih.rda
+^\.travis\.yml$
+^docs$
+^pkgdown

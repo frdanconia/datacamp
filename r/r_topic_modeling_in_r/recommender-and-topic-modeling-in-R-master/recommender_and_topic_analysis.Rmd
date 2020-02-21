@@ -1,0 +1,130 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook with sample implementation of a recommendation system and topic analysis system.
+
+RECOMMENDATION SYSTEM:
+The dataset used for creating this recommendation system was the inbuilt R movielense dataset.
+```{r}
+library("recommenderlab")
+data(MovieLense)
+
+head(MovieLense)
+
+recommendation_model <- Recommender(MovieLense,method="UBCF", 
+                         param=list(normalize = "Z-score",method="Cosine",nn=5, minRating=1))
+
+# predicting evaluations for the first user
+user1_recommendation <- predict(recommendation_model, MovieLense[156,], n=10)
+as(user1_recommendation, "list")
+
+#viewing the top 5 recommendations
+top5_recommendations <- bestN(user1_recommendation, n = 5)
+as(top5_recommendations, "list")
+
+# evaluating performance of the model using training set and test sets
+eval_movie <- evaluationScheme(MovieLense, method="split", train=0.9, given = 10)
+
+# creating models based on UBCF and IBCF methods
+
+movie_ubcf <- Recommender(getData(eval_movie, "train"), "UBCF")
+movie_ibcf <- Recommender(getData(eval_movie, "train"), "IBCF")
+
+#predicting results for the test set
+pred_ubcf <- predict(movie_ubcf, getData(eval_movie, "known"), type="ratings")
+pred_ibcf <- predict(movie_ibcf, getData(eval_movie, "known"), type="ratings")
+
+error_ubcf<-calcPredictionAccuracy(pred_ubcf, getData(eval_movie, "unknown"))
+error_ibcf<-calcPredictionAccuracy(pred_ibcf, getData(eval_movie, "unknown"))
+
+error <- rbind(error_ubcf,error_ibcf)
+rownames(error) <- c("UBCF","IBCF")
+print(error)
+
+
+```
+TOPIC ANALYSIS:
+
+A women's clothing customer review dataset was used to perform sentiment analysis and word frequency counts
+```{r}
+library(tm)
+library(wordcloud)
+library(dendextend)
+library(ggplot2)
+library(ggthemes)
+
+firstReview_data<- read.csv("Womens Clothing E-Commerce Reviews.csv", sep = ",", header = TRUE, stringsAsFactors = F)
+str(firstReview_data)
+summary(firstReview_data)
+
+review_data <- firstReview_data$Review.Text
+review_source <- VectorSource(review_data)
+review_corpus <- VCorpus(review_source)
+str(review_corpus[[100]])
+review_corpus[[100]][1]
+stopwords("en")
+
+# Steps taken in the data cleaning:
+# - changing everything to lowercase tolower()
+# - remove punctuations removePunctuation()
+# - remove numbers removeNumbers()
+# - remove white spaces stripWhitespaces()
+# - remove text within brackets bracketX()
+# - replace number with the textual form replace_number()
+# - replace abbreviation replace_abbreviation()
+# - replace contractions replace_contraction()
+# - replace symbols replace_symbol()
+
+# Here is a function performing the most important tasks for a corpus
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, stripWhitespace)
+  corpus <- tm_map(corpus, removePunctuation)
+  corpus <- tm_map(corpus, content_transformer(tolower))
+  corpus <- tm_map(corpus, removeWords, c(stopwords("en"), "wear", "fabric", "just"))
+  #first iteration the words "fabric" and "just" were added
+  #first iteration the word "wear" was added to the stopwords
+  corpus <- tm_map(corpus, removeNumbers)
+  return(corpus)
+}
+
+## applying this to the previously created corpus
+clean_corp <- clean_corpus(review_corpus)
+
+# example processed text
+clean_corp[[110]][1]
+# same tweet in original form
+firstReview_data$Review.Text[110]
+
+# Converting the text (unstructured data) into structured form using document-term matrix
+# (a table in which each row corresponds to a document and each column to a term/word)
+# The element [i,j] is the number of the occurences of term j in document i
+
+review_dtm <- DocumentTermMatrix(clean_corp)
+review_dtm
+
+# converting into a simple numerical matrix to make computations easier
+
+review_matrix <- as.matrix(review_dtm)
+term_frequency <- colSums(review_matrix)
+term_frequency <- sort(term_frequency, decreasing = T)
+term_frequency[1:10]
+barplot(term_frequency[1:10], col = "tan", las = 2)
+# example outcomes
+review_matrix[148:150, 2587:2590]
+
+# Creating a wordcloud, First we need to convert TDM into matrix
+review_term_freq <- colSums(review_matrix)
+review_word_freqs <- data.frame(
+  term = names(review_term_freq),
+  num = review_term_freq
+)
+wordcloud(review_word_freqs$term, review_word_freqs$num,
+          max.words = 30, colors = "red")
+#dresses and tops seem to be mentioned frequently, as well as fit, size, color, great etc
+#this could give an insigth into which category is more popular (dresses/tops,
+#and which factors are important like size and color)
+
+
+```

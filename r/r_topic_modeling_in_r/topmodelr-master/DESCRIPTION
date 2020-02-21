@@ -1,0 +1,34 @@
+Package: topmodelr
+Title: Topic Modeling in R (LDA, BTM)
+Version: 0.0.1
+Authors@R: 
+    person(given = "Donatus",
+           family = "Herre",
+           role = c("aut", "cre"),
+           email = "git@herre.io")
+Description: For model creation the latent Dirichlet allocation and the
+    biterm topic model via R libraries topicmodels and BTM are used with
+    Gibbs Sampling as inference method.
+License: file LICENSE
+Encoding: UTF-8
+LazyData: true
+Imports:
+    BTM,
+    LDAvis,
+    RcppAnnoy,
+    dplyr,
+    ldatuning,
+    methods,
+    slam,
+    stats,
+    stopwords,
+    stringr,
+    tm,
+    topicmodels,
+    utlr
+Suggests:
+    maxplanckr,
+    servr
+Remotes: herreio/utlr,
+    herreio/maxplanckr
+RoxygenNote: 7.0.2
