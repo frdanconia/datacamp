@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1582321900615.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "4127248242",
+    "id" : "A160973",
+    "lastKnownWriteTime" : 1582322834,
+    "last_content_update" : 1582322834621,
+    "path" : "C:/Users/frdanconia/Desktop/r_network_analysis_in_the_tidyverse/main.R",
+    "project_path" : "main.R",
+    "properties" : {
+        "cursorPosition" : "278,44",
+        "scrollLine" : "269"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
