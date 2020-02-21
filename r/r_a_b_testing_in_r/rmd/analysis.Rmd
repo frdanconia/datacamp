@@ -1,0 +1,12 @@
+---
+title: "Simulating A/B Test Results in R"
+author: "Chip Oglesby"
+date: "`r format(Sys.Date(), '%Y-%m-%d')`"
+output: 
+  github_document:
+    html_preview: FALSE
+  pdf_document:
+    toc: false
+---
+
+## Are the A/B test results you find correct?

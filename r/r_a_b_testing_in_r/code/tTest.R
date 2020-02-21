@@ -1,0 +1,1 @@
+t.test(flips1, flips2, conf.level = .99)
