@@ -1,0 +1,14 @@
+pandoc: 2.3.1
+pkgdown: 1.4.1
+pkgdown_sha: ~
+articles:
+  a_start_here: a_start_here.html
+  b_document_clustering: b_document_clustering.html
+  c_topic_modeling: c_topic_modeling.html
+  d_text_embeddings: d_text_embeddings.html
+  e_doc_summarization: e_doc_summarization.html
+  f_tidytext_example: f_tidytext_example.html
+urls:
+  reference: https://www.rtextmineR.com/reference
+  article: https://www.rtextmineR.com/articles
+
