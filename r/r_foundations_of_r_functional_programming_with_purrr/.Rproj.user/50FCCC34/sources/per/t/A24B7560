@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1583501803328.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "988213937",
+    "id" : "A24B7560",
+    "lastKnownWriteTime" : 1583502844,
+    "last_content_update" : 1583502844507,
+    "path" : "C:/Users/frdanconia/Desktop/r_foundations_of_r_functional_programming_with_purrr/main.R",
+    "project_path" : "main.R",
+    "properties" : {
+        "cursorPosition" : "256,26",
+        "scrollLine" : "248",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

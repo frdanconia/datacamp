@@ -1,0 +1,265 @@
+library(dplyr)
+library(purrr)
+library(readr)
+library(ggplot2)
+library(tidyr)
+
+files <- list.files()
+files <- files[stringr::str_detect(files,"data")]
+
+# Initialize list
+all_files <- list()
+
+# For loop to read files into a list
+for(i in seq_along(files)){
+  all_files[[i]] <- read_csv(file = files[[i]])
+}
+
+# Output size of list object
+length(all_files)
+
+# Use map to iterate
+all_files_purrr <- map(files, read_csv)
+
+# Output size of list object
+length(all_files_purrr)
+list_of_df <- list(c("1", "2", "3", "4"),c("1", "2", "3", "4"),c("1", "2", "3", "4"),c("1", "2", "3", "4"))
+
+# Check the class type of the first element
+class(list_of_df[[1]])
+
+# Change each element from a character to a number
+for(i in seq_along(list_of_df)){
+  list_of_df[[i]] <- as.numeric(list_of_df[[i]])
+}
+
+# Check the class type of the first element
+class(list_of_df[[1]])
+
+# Print out the list
+list_of_df
+
+# Check the class type of the first element
+class(list_of_df[[1]])  
+
+# Change each character element to a number
+list_of_df <- map(list_of_df, as.numeric)
+
+# Check the class type of the first element again
+class(list_of_df[[1]]) 
+
+# Print out the list
+list_of_df
+
+# Load repurrrsive package, to get access to the wesanderson dataset
+library(repurrrsive)
+
+# Load wesanderson dataset
+data(wesanderson)
+
+# Get structure of first element in wesanderson
+str(wesanderson[[1]])
+
+# Get structure of GrandBudapest element in wesanderson
+str(wesanderson$GrandBudapest)
+
+# Third element of the first wesanderson vector
+wesanderson[[1]][3]
+
+# Fourth element of the GrandBudapest wesanderson vector
+wesanderson$GrandBudapest[4]
+
+# Map over wesanderson to get the length of each element
+map(wesanderson, length)
+
+# Map over wesanderson, to determine the length of each element
+map(wesanderson, length)
+
+# Use pipes to check for names in sw_films
+sw_films %>%
+  names()
+
+# Set names so each element of the list is named for the film title
+sw_films_named <- sw_films %>% 
+  set_names(map_chr(sw_films, "title"))
+
+# Check to see if the names worked/are correct
+names(sw_films_named)
+
+# Create a list of values from 1 through 10
+numlist <- list(1,2,3,4,5,6,7,8,9,10)
+
+# Iterate over the numlist 
+map(numlist, ~.x %>% sqrt() %>% sin())
+
+# List of sites north, east, and west
+sites <- list("north","east","west")
+
+# Create a list of dataframes, each with a years, a, and b column
+list_of_df <-  map(sites,  
+                   ~data.frame(sites = .x,
+                               a = rnorm(mean = 5,   n = 200, sd = (5/2)),
+                               b = rnorm(mean = 200, n = 200, sd = 15)))
+
+list_of_df
+
+# Map over the models to look at the relationship of a vs b
+list_of_df %>%
+  map(~ lm(a ~ b, data = .)) %>%
+  map(summary)
+
+# Pull out the director element of sw_films in a list and character vector
+map(sw_films, ~.x[["director"]])
+map_chr(sw_films, ~.x[["director"]])
+
+# Pull out episode_id element as list
+map(sw_films, ~.x[["episode_id"]])
+
+# Pull out episode_id element as double vector
+map_dbl(sw_films, ~.x[["episode_id"]])
+
+# List of 1, 2 and 3
+means <- list(1,2,3)
+
+# Create sites list
+sites <- list("north","west","east")
+
+# Map over two arguments: sites and means
+list_of_files_map2 <- map2(sites, means, ~data.frame(sites = .x,
+                                                     a = rnorm(mean = .y, n = 200, sd = (5/2))))
+
+list_of_files_map2
+
+means2 <- list(0.5,1,1.5)
+sigma2 <- list(0.5,1,1.5)
+
+
+# Create a master list, a list of lists
+pmapinputs <- list(sites = sites, means = means, sigma = sigma, 
+                   means2 = means2, sigma2 = sigma2)
+
+# Map over the master list
+list_of_files_pmap <- pmap(pmapinputs, 
+                           function(sites, means, sigma, means2, sigma2) 
+                             data.frame(sites = sites,
+                                        a = rnorm(mean = means,  n = 200, sd = sigma),
+                                        b = rnorm(mean = means2, n = 200, sd = sigma2)))
+
+list_of_files_pmap
+
+# Map safely over log
+a <- list(-10, 1, 10, 0) %>% 
+  map(safely(log, otherwise = NA_real_)) %>%
+  # Transpose the result
+  transpose()
+
+# Load sw_people data
+data(sw_people)
+
+# Map over sw_people and pull out the height element
+height_cm <- map(sw_people, "height") %>%
+  map(function(x){
+    ifelse(x == "unknown",NA,
+           as.numeric(x))
+  })
+
+# Map over sw_people and pull out the height element
+height_ft <- map(sw_people, "height")  %>% 
+  map(safely(function(x){
+    x * 0.0328084
+  }, quiet = FALSE)) %>%
+  transpose()
+
+# Print your list, the result element, and the error element
+height_ft
+height_ft[["result"]]
+height_ft[["error"]]
+
+# Take the log of each element in the list
+a <- list(-10, 1, 10, 0) %>% 
+  map(possibly(function(x){
+    log(x)
+  },NA_real_))
+
+# Create a piped workflow that returns double vectors
+height_cm %>%  
+  map_dbl(possibly(function(x){
+    # Convert centimeters to feet
+    x * 0.0328084
+  }, NA_real_)) 
+
+# Print normally
+people_by_film
+
+# Load the gap_split data
+data(gap_split)
+
+# Map over the first 10 elements of gap_split
+plots <- map2(gap_split[1:10], 
+              names(gap_split[1:10]), 
+              ~ ggplot(.x, aes(year, lifeExp)) + 
+                geom_line() +
+                labs(title = .y))
+
+# Object name, then function name
+walk(plots, print)
+
+# Load the data
+data(gh_users)
+
+# Name gh_users with the names of the users
+gh_users_named <- gh_users %>% 
+  set_names(map_chr(gh_users, "name"))
+
+# Check gh_repos structure
+str(gh_repos)
+
+# Name gh_repos with the names of the repo owner
+gh_repos_named <- gh_repos %>% 
+  map_chr(~ .[[1]]$owner$login) %>% 
+  set_names(gh_repos, .)
+
+# Determine who joined github first
+map_chr(gh_users, ~.x[["created_at"]]) %>%
+  set_names(map_chr(gh_users, "name")) %>%
+  sort()
+
+# Map over gh_repos to generate numeric output
+map(gh_repos,
+    ~map_dbl(.x, 
+             ~.x[["size"]])) %>%
+  # Grab the largest element
+  map(~max(.x))
+
+
+# Scatter plot of public repos and followers
+ggplot(data = gh_users_df, 
+       aes(x = public_repos, y = followers))+
+  geom_point()
+
+# Create a dataframe with four columns
+map_df(gh_users, `[`, 
+       c("login","name","followers","public_repos")) %>%
+  # Plot followers by public_repos
+  ggplot(., 
+         aes(x = followers, y = public_repos)) + 
+  # Create scatter plots
+  geom_point()
+
+# Turn data into correct dataframe format
+film_by_character <- tibble(filmtitle = map_chr(sw_films, "title")) %>%
+  mutate(filmtitle, characters = map(sw_films, "characters")) %>%
+  unnest()
+
+# Pull out elements from sw_people
+sw_characters <- map_df(sw_people, `[`, c("height","mass","name","url"))
+
+# Join our two new objects
+character_data <- inner_join(film_by_character, sw_characters, by = c("characters" = "url")) %>%
+  # Make sure the columns are numbers
+  mutate(height = as.numeric(height), mass = as.numeric(mass))
+
+# Plot the heights, faceted by film title
+ggplot(character_data, aes(x = height)) +
+  geom_histogram(stat = "count") +
+  facet_wrap(~ filmtitle)
