@@ -1,0 +1,19 @@
+"0","# Are some elements in every all_visits vectors over the defined threshold? 
+map(all_visits, ~ some(.x, over_threshold))
+"
+"1","[[1]]
+"
+"1","[1]"
+"1"," FALSE"
+"1","
+"
+"1","
+"
+"1","[[2]]
+"
+"1","[1]"
+"1"," TRUE"
+"1","
+"
+"1","
+"

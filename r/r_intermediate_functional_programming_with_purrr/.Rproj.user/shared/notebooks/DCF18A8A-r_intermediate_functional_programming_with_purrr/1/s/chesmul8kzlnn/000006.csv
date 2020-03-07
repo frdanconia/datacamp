@@ -1,0 +1,9 @@
+"0","# Complete the pipe to get the ratio of URLs with ""github""
+map(rstudioconf, ""urls_url"") %>%
+    flatten_and_compact() %>% 
+    ratio_pattern(""github"")
+"
+"1","[1]"
+"1"," 0.2943172"
+"1","
+"

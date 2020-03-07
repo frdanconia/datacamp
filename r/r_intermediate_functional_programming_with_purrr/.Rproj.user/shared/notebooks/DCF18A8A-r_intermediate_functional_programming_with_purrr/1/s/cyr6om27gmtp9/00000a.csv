@@ -1,0 +1,35 @@
+"0","# Try this function on the urls object
+url_tester(urls)
+"
+"1","$`https://thinkr.fr`
+"
+"1","[1]"
+"1"," 200"
+"1","
+"
+"1","
+"
+"1","$`https://colinfay.me`
+"
+"1","[1]"
+"1"," 200"
+"1","
+"
+"1","
+"
+"1","$`https://datacamp.com`
+"
+"1","[1]"
+"1"," 200"
+"1","
+"
+"1","
+"
+"1","$`http://cran.r-project.org/`
+"
+"1","[1]"
+"1"," 200"
+"1","
+"
+"1","
+"

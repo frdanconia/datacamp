@@ -1,0 +1,5 @@
+"0","# Create a ""links"" columns, by mapping get_links() on urls"
+"0","df2 <- df %>%"
+"0","    mutate(links = map(urls, get_links)) "
+"0","# Print df2 to see what it looks like"
+"0","df2"

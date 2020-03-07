@@ -1,0 +1,730 @@
+
+### _Intermediate Functional Programming with purrr_  
+  
+Chapter 1 - Programming with purrr  
+  
+Refresher of purrr Basics:  
+  
+* The map() function is one of the most basic purrr calls  
+	* map(.x, .f, …)  # for each element of .x do .f  
+* OpenData files available from French city St Malo  
+    * JSON format; nested list  
+* The map() function will always return a list by default  
+	* res <- map(visit_2015, sum)  # returns a list  
+* Can override to other preferred outputs, such as map_dbl()  
+	* res <- map_dbl(visit_2015, sum)  # returns a numeric  
+* Can also extend to map2(.x, .y, .f, …) which resolves to do .f(.x, .y, …)  
+	* res <- map2(visit_2015, visit_2016, sum)  
+    * res <- map2_dbl(visit_2015, visit_2016, sum)  
+* Can use pmap() to run operations on 3+ items, though these need to be passed in as a list  
+	* l <- list(visit_2014, visit_2015, visit_2016)  
+    * res <- pmap(l, sum)  
+    * res <- pmap_dbl(l, sum)  
+  
+Introduction to mappers:  
+  
+* The .f is the action element - function applied to every element, number n to extract the nth element, character vector of named elements to extract  
+* The functions can either be regular functions or lambda (anonymous) functions  
+	* map_dbl(visit_2014, function(x) { round(mean(x)) })   
+* The anonymous function with a one-sided formula can be written in any of several ways  
+	* map_dbl(visits2017, ~ round(mean(.x)))  # typically the default  
+    * map_dbl(visits2017, ~ round(mean(.)))  
+    * map_dbl(visits2017, ~ round(mean(..1)))  
+    * map2(visits2016, visits2017, ~ .x + .y)  
+    * map2(visits2016, visits2017, ~ ..1 + ..2)  
+* Can extend to data with more than 2 parameters  
+	* pmap(list, ~ ..1 + ..2 + ..3)  
+* Can use as_mapper to create mapper objects from lambda functions  
+	* round_mean <- function(x){ round(mean(x)) }  
+    * round_mean <- as_mapper(~ round(mean(.x))))  
+* Mappers have several benefits  
+	* More concise  
+    * Easier to read than functions  
+    * Reusable  
+  
+Using Mappers to Clean Data:  
+  
+* Can use set_names from purrr to set the names of a list  
+	* visits2016 <- set_names(visits2016, month.abb)  
+    * all_visits <- list(visits2015, visits2016, visits2017)  
+    * named_all_visits <- map(all_visits, ~ set_names(.x, month.abb))  
+* The keep() function extracts elements that satisfy a condition  
+	* over_30000 <- keep(visits2016, ~ sum(.x) > 30000)  
+    * limit <- as_mapper(~ sum(.x) > 30000)  
+    * over_mapper <- keep(visits2016, limit)  
+* The discard() function removes elements that satisfy a condition  
+	* under_30000 <- discard(visits2016, ~ sum(.x) > 30000)  
+    * limit <- as_mapper(~ sum(.x) > 30000)  
+    * under_mapper <- discard(visits2016, limit)  
+    * names(under_mapper)  
+* Can use keep() and discard() with map() to clean up lists  
+	* df_list <- list(iris, airquality) %>% map(head)  
+    * map(df_list, ~ keep(.x, is.factor))  
+  
+Predicates:  
+  
+* Predicates return either TRUE or FALSE - example of is.numeric()  
+* Predicate functionals take an element and a predicate, and then use the predicate on the element  
+	* keep(airquality, is.numeric)  # keep all elements that return TRUE when run against the predicate  
+* There are also extensions of every() and some()  
+	* every(visits2016, is.numeric)  
+    * every(visits2016, ~ mean(.x) > 1000)  
+    * some(visits2016, ~ mean(.x) > 1000)  
+* The detect_index() returns the first and last element that satisfies a condition  
+	* detect_index(visits2016, ~ mean(.x) > 1000)  # index of first element that satisfies  
+    * detect_index(visits2016, ~ mean(.x) > 1000, .right = TRUE)  # index of last element that satisfies  
+* The detect() returns the value rather than the index  
+	* detect(visits2016, ~ mean(.x) > 1000, .right = TRUE)  
+* The has_element() tests whether an object contains an item  
+	* visits2016_mean <- map(visits2016, mean)  
+    * has_element(visits2016_mean,981)  
+  
+Example code includes:  
+```{r}
+library(purrr)
+library(dplyr)
+
+visit_a <- c(117, 147, 131, 73, 81, 134, 121)
+visit_b <- c(180, 193, 116, 166, 131, 153, 146)
+visit_c <- c(57, 110, 68, 72, 87, 141, 67)
+
+# Create the to_day function
+to_day <- function(x) {
+    x*24
+}
+
+# Create a list containing both vectors: all_visits
+all_visits <- list(visit_a, visit_b)
+
+# Convert to daily number of visits: all_visits_day
+all_visits_day <- map(all_visits, to_day)
+
+# Map the mean() function and output a numeric vector 
+map_dbl(all_visits_day, mean)
+
+
+# You'll test out both map() and walk() for plotting
+# Both return the "side effects," that is to say, the changes in the environment (drawing plots, downloading a file, changing the working directory...), but walk() won't print anything to the console.
+
+# Create all_tests list  and modify with to_day() function
+all_tests <- list(visit_a, visit_b, visit_c)
+all_tests_day <- map(all_tests, to_day)
+
+# Plot all_tests_day with map
+map(all_tests_day, barplot)
+
+# Plot all_tests_day
+walk(all_tests_day, barplot)
+
+# Get sum of all visits and class of sum_all
+sum_all <- pmap(all_tests_day, sum)
+class(sum_all)
+
+
+# Turn visit_a into daily number using an anonymous function
+map(visit_a, function(x) { x*24 })
+
+# Turn visit_a into daily number of visits by using a mapper
+map(visit_a, ~.x*24)
+
+# Create a mapper object called to_day
+to_day <- as_mapper(~.x*24)
+
+# Use it on the three vectors
+map(visit_a, to_day)
+map(visit_b, to_day)
+map(visit_c, to_day)
+
+
+# Round visit_a to the nearest tenth with a mapper
+map_dbl(visit_a, ~ round(.x, -1))
+
+# Create to_ten, a mapper that rounds to the nearest tenth
+to_ten <- as_mapper(~ round(.x, -1))
+
+# Map to_ten on visit_b
+map_dbl(visit_b, to_ten)
+
+# Map to_ten on visit_c
+map_dbl(visit_c, to_ten)
+
+
+# Create a mapper that test if .x is more than 100 
+is_more_than_hundred <- as_mapper(~ .x > 100)
+
+# Run this mapper on the all_visits object
+map(all_visits, ~ keep(.x, is_more_than_hundred) )
+
+# Use the  day vector to set names to all_list
+day <- c("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+full_visits_named <- map(all_visits, ~ set_names(.x, day))
+
+# Use this mapper with keep() 
+map(full_visits_named, ~ keep(.x, is_more_than_hundred))
+
+
+# Set the name of each subvector
+day <- c("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+all_visits_named <- map(all_visits, ~ set_names(.x, day))
+
+# Create a mapper that will test if .x is over 100 
+threshold <- as_mapper(~.x > 100)
+
+# Run this mapper on the all_visits object: group_over
+group_over <- map(all_visits, ~ keep(.x, threshold) )
+
+# Run this mapper on the all_visits object: group_under
+group_under <-  map(all_visits, ~ discard(.x, threshold) )
+
+
+# Create a threshold variable, set it to 160
+threshold <- 160
+
+# Create a mapper that tests if .x is over the defined threshold
+over_threshold <- as_mapper(~ .x > threshold)
+
+# Are all elements in every all_visits vectors over the defined threshold? 
+map(all_visits, ~ every(.x, over_threshold))
+
+# Are some elements in every all_visits vectors over the defined threshold? 
+map(all_visits, ~ some(.x, over_threshold))
+
+```
+  
+  
+  
+***
+  
+Chapter 2 - Functional Programming from Theory to Practice  
+  
+Functional Programming in R:  
+  
+* Everything that exists is an object and everything that happens is a function call  
+	* This means that a function is an object and can be treated as such  
+    * Every action in R is performed by a function  
+    * Functions are first-class citizens, and behave like any other object  
+    * Functions can be manipulated, stored as variables, lambda (anonymous), stored in a list, arguments of a function, returned by a function  
+    * R is a functional programming language  
+* In a "pure function", output depends only on input, and there are no side-effects (no changes to the environment)  
+	* Sys.Date() depends on the enviornment and is thus not pure  
+    * write.csv() is called solely for the side effect (writing a file) and is thus not pure  
+  
+Tools for Functional Programming in purrr:  
+  
+* A high order function can take functions as input and return functions as output  
+	* nop_na <- function(fun){  
+    *     function(...){ fun(..., na.rm = TRUE) }  
+    * }  
+    * sd_no_na <- nop_na(sd)  
+    * sd_no_na( c(NA, 1, 2, NA) )  
+* There are three types of high-order functions  
+	* Functionals take another function and return a vector - like map()  
+    * Function factories take a vector and create a function  
+    * Function operators take functions and return functions - considered to be "adverbs"  
+* Two of the most common adverbs in purrr are safely() and possibly()  
+	* The safely() call returns a function that will return $result and $error when run; helpful for diagnosing issues with code rather than losing the information  
+    * safe_log <- safely(log)  
+    * safe_log("a")  # there will be $result of NULL and $error with the error code  
+    * map( list(2, "a"), safely(log) )  
+  
+Using possibly():  
+  
+* The possibly() function is an adverb that returns either the value of the function OR the value specified in the otherwise element  
+	* possible_sum <- possibly(sum, otherwise = "nop")  
+    * possible_sum("a")  # result will be "nop"  
+* Note that possibly() cannot be made to run a function; it will just return a pre-specified value  
+  
+Handling adverb results:  
+  
+* Can use transpose() to change the output (converts the list to inside out)  
+	* Transpose turn a list of n elements a and b to a list of a and b, with each n elements  
+* The compact() function will remove the NULL elements  
+	* l <- list(1,2,3,"a")  
+    * possible_log <- possibly(log, otherwise = NULL)  
+    * map(l, possible_log) %>% compact()  
+* Can use the httr package specifically for http requests  
+	* httr::GET(url) will return the value from attempting to connect to url - 200 is good, 404 is unavailable, etc.  
+  
+Example code includes:  
+```{r cache=TRUE}
+
+# `$` is a function call, of a special type called 'infix operator', as they are put between two elements, and can be used without parenthesis.
+
+# Launch Sys.time(), Sys.sleep(1), & Sys.time()
+Sys.time()
+Sys.sleep(1)
+Sys.time()
+
+
+data(iris)
+str(iris)
+
+
+# Launch nrow(iris), Sys.sleep(1), & nrow(iris)
+nrow(iris)
+Sys.sleep(1)
+nrow(iris)
+
+
+# Launch ls(), create an object, then rerun the ls() function
+# ls()
+# this <- 12
+# ls()
+
+# Create a plot of the iris dataset
+plot(iris)
+
+
+urls <- c('https://thinkr.fr', 'https://colinfay.me', 'http://not_working.org', 'https://datacamp.com', 'http://cran.r-project.org/', 'https://not_working_either.org')
+
+
+# Create a safe version of read_lines()
+safe_read <- safely(readr::read_lines)
+
+# Map it on the urls vector
+res <- map(urls, safe_read)
+
+# Set the name of the results to `urls`
+named_res <-  set_names(res, urls)
+
+# Extract only the "error" part of each sublist
+map(named_res, "error")
+
+
+# Code a function that discard() the NULL from safe_read()
+safe_read_discard <- function(url){
+    safe_read(url) %>%
+        discard(is.null)
+}
+
+# Map this function on the url list
+res <- map(urls, safe_read_discard)
+
+
+# Create a possibly() version of read_lines()
+possible_read <- possibly(readr::read_lines, otherwise = 404)
+
+# Map this function on urls, pipe it into set_names()
+res <- map(urls, possible_read) %>% set_names(urls)
+
+# Paste each element of the list 
+res_pasted <- map(res, paste, collapse=" ")
+
+# Keep only the elements which are equal to 404
+keep(res_pasted, ~ .x == 404)
+
+
+url_tester <- function(url_list){
+    url_list %>%
+        # Map a version of read_lines() that otherwise returns 404
+        map( possibly(readr::read_lines, otherwise = 404) ) %>%
+        # Set the names of the result
+        set_names( urls ) %>% 
+        # paste() and collapse each element
+        map(paste, collapse =" ") %>%
+        # Remove the 404 
+        discard(~.x==404) %>%
+        names() # Will return the names of the good ones
+}
+
+# Try this function on the urls object
+url_tester(urls)
+
+
+url_tester <- function(url_list, type = c("result", "error")){
+    res <- url_list %>%
+        # Create a safely() version of read_lines() 
+        map( safely(readr::read_lines) ) %>%
+        set_names( url_list ) %>%
+        # Transpose into a list of $result and $error
+        transpose() 
+    # Complete this if statement
+    if (type == "result") return( res$result ) 
+    if (type == "error") return( res$error ) 
+}
+
+# Try this function on the urls object
+url_tester(urls, type = "error") 
+
+
+url_tester <- function(url_list){
+    url_list %>%
+        # Map a version of GET() that would otherwise return NULL 
+        map( possibly(httr::GET, otherwise=NULL) ) %>%
+        # Set the names of the result
+        set_names( urls ) %>%
+        # Remove the NULL
+        compact() %>%
+        # Extract all the "status_code" elements
+        map("status_code")
+}
+
+# Try this function on the urls object
+url_tester(urls)
+
+```
+  
+  
+  
+***
+  
+Chapter 3 - Better Code with purrr  
+  
+Rationale for cleaner code:  
+  
+* Cleaner code is easier to debug (spot typos), easier to interpret, and easier to modify  
+	* tidy_iris_lm <- compose( as_mapper(~ filter(.x, p.value < 0.05)), tidy, partial(lm, data=iris, na.action = na.fail) )  
+    * list( Petal.Length ~ Petal.Width, Petal.Width ~ Sepal.Width, Sepal.Width ~ Sepal.Length ) %>% map(tidy_iris_lm)  
+* Clean code characteristics  
+	* Light - no unnecessary code  
+    * Readable - less repition makes for easier reading (one piece of code for one task)  
+    * Interpretable  
+    * Maintainable  
+* The compose() function is used to compose a function from two or more functions  
+	* rounded_mean <- compose(round, mean)  
+  
+Building functions with compose() and negate():  
+  
+* There is a limitless amount of functions that can be included in compose()  
+	* clean_aov <- compose(tidy, anova, lm)  
+* Can use negate() to flip the predicate - TRUE becomes FALSE and FALSE becomes TRUE  
+	* is_not_na <- negate(is.na)  
+    * under_hundred <- as_mapper(~ mean(.x) < 100)  
+    * not_under_hundred <- negate(under_hundred)  
+    * map_lgl(98:102, under_hundred)  
+    * map_lgl(98:102, not_under_hundred)  
+* The "good" status return codes from GET() are in the low-200s  
+	* good_status <- c(200, 201, 202, 203)  
+    * status %in% good_status  
+  
+Prefilling functions:  
+  
+* The partial() allows for pre-filling a function  
+	* mean_na_rm <- partial(mean, na.rm = TRUE)  
+    * lm_iris <- partial(lm, data = iris)  
+* Can also combine partial() and compose()  
+	* rounded_mean <- compose( partial(round, digits = 2), partial(mean, na.rm = TRUE) )  
+* Can use functions from rvest for web scraping  
+	* read_html()  
+    * html_nodes()  
+    * html_text()  
+    * html_attr()  
+  
+List columns:  
+  
+* A list column is part of a nested data frame - one or more of the data frame columns is itself a list (requires use of tibble rather than data.frame)  
+	* df <- tibble( classic = c("a", "b","c"), list = list( c("a", "b","c"), c("a", "b","c", "d"), c("a", "b","c", "d", "e") ) )  
+    * a_node <- partial(html_nodes, css = "a")  
+    * href <- partial(html_attr, name = "href")  
+    * get_links <- compose( href, a_node,  read_html )  
+    * urls_df <- tibble( urls = c("https://thinkr.fr", "https://colinfay.me", "https://datacamp.com", "http://cran.r-project.org/") )  
+    * urls_df %>% mutate(links = map(urls, get_links))  
+* Can also unnest the data from the list columns  
+	* urls_df %>% mutate(links = map(urls, get_links)) %>% unnest()  
+* Can also nest() a standard data.frame  
+	* iris_n <- iris %>% group_by(Species) %>% tidyr::nest()  
+* Since the list column is a list, the purrr functions can be run on them  
+	* iris_n %>% mutate(lm = map(data, ~ lm(Sepal.Length ~ Sepal.Width, data = .x)))  
+    * summary_lm <- compose(summary, lm)  
+    * iris %>% group_by(Species) %>% nest() %>% mutate(data = map(data, ~ summary_lm(Sepal.Length ~ Sepal.Width, data = .x)), data = map(data, "r.squared")) %>% unnest()  
+  
+Example code includes:  
+```{r cache=TRUE}
+
+urls <- c('https://thinkr.fr', 'https://colinfay.me', 'http://not_working.org', 'https://datacamp.com', 'http://cran.r-project.org/', 'https://not_working_either.org')
+
+
+# Compose a status extractor (compose is also an igraph function)
+status_extract <- purrr::compose(httr::status_code, httr::GET)
+
+# Try with "https://thinkr.fr" & "http://datacamp.com"
+status_extract("https://thinkr.fr")
+status_extract("http://datacamp.com")
+
+# Map it on the urls vector, return a vector of numbers
+oldUrls <- urls
+urls <- oldUrls[c(1, 2, 4, 5)]
+map_dbl(urls, status_extract)
+
+
+# Negate the %in% function 
+`%not_in%` <- negate(`%in%`)
+
+# Compose a status extractor 
+status_extract <- purrr::compose(httr::status_code, httr::GET)
+
+# Complete the function
+strict_code <- function(url){
+    code <- status_extract(url)
+    if (code %not_in% c(200:203)){ return(NA) } else { return(code) } 
+}
+
+
+# Map the strict_code function on the urls vector
+res <- map(urls, strict_code)
+
+# Set the names of the results using the urls vector
+res_named <- set_names(res, urls)
+
+# Negate the is.na function
+is_not_na <- negate(is.na)
+
+# Run is_not_na on the results
+is_not_na(res_named)
+
+
+# Prefill html_nodes() with the css param set to h2
+get_h2 <- partial(rvest::html_nodes, css="h2")
+
+# Combine the html_text, get_h2 and read_html functions
+get_content <- purrr::compose(rvest::html_text, get_h2, xml2::read_html)
+
+# Map get_content to the urls list
+res <- map(urls, get_content) %>%
+    set_names(urls)
+
+# Print the results to the console
+res
+
+
+# Create a partial version of html_nodes(), with the css param set to "a"
+a_node <- partial(rvest::html_nodes, css="a")
+
+# Create href(), a partial version of html_attr()
+href <- partial(rvest::html_attr, name = "href")
+
+# Combine href(), a_node(), and read_html()
+get_links <- purrr::compose(href, a_node, xml2::read_html)
+
+# Map get_links() to the urls list
+res <- map(urls, get_links) %>%
+    set_names(urls)
+
+
+df <- tibble::tibble(urls=urls)
+df
+
+
+# Create a "links" columns, by mapping get_links() on urls
+df2 <- df %>%
+    mutate(links = map(urls, get_links)) 
+
+# Print df2 to see what it looks like
+df2
+
+# unnest() df2 to have a tidy dataframe
+df2 %>%
+    tidyr::unnest()
+
+```
+  
+  
+  
+***
+  
+Chapter 4 - Case Study  
+  
+Discovering the Dataset:  
+  
+* The dataset is available from https://github.com/ThinkR-open/datasets  
+	* rstudioconf: a list of 5055 tweets  
+    * length(rstudioconf)  
+    * length(rstudioconf[[1]])  
+    * purrr::vec_depth(rstudioconf)  
+* JSON is a standard data format for the web, and typically consists of key-value pairs which are read as nested lists by R  
+* Refresher of keep() and discard() usage  
+	* keep(1:10, ~ .x < 5)  
+    * discard(1:10, ~ .x < 5)  
+  
+Extracting Information from the Dataset:  
+  
+* Can manipulate functions for list cleaning using high-order functions - includes partial() and compose()  
+	* sum_no_na <- partial(sum, na.rm = TRUE)  
+    * map_dbl(airquality, sum_no_na)  
+    * rounded_sum <- compose(round, sum_no_na)  
+    * map_dbl(airquality, rounded_sum)  
+* Can also clean lists using compact() to remove NULL and flatten() to remove one level from a nested list  
+	* l <- list(NULL, 1, 2, 3, NULL)  
+    * compact(l)  
+    * my_list <- list( list(a = 1), list(b = 2) )  
+    * flatten(my_list)  
+  
+Manipulating URL:  
+  
+* Can use the mapper functions to create a re-usable function  
+	* mult <- as_mapper(~ .x * 2)  
+* Can use str_detect inside the mapper function  
+	* lyrics <- c("Is this the real life?", "Is this just fantasy?", "Caught in a landslide", "No escape from reality")  
+    * stringr::str_detect(a, "life")  
+  
+Identifying Influencers:  
+  
+* Can use the map_at() function to run a function at a specific portion of the list  
+	* my_list <- list( a = 1:10, b = 1:100, c = 12 )  
+    * map_at(.x = my_list, .at = "b", .f = sum)  
+* Can also use negate() to reverse the actio of a predicate  
+	* not_character <- negate(is.character)  
+    * my_list <- list( a = 1:10, b = "a", c = iris )  
+    * map(my_list, not_character)  
+  
+Wrap up:  
+  
+* Lambda functions and reusable mappers  
+	* map(1:5, ~ .x*10)  
+    * ten_times <- as_mapper(~ .x * 10)  
+    * map(1:5, ten_times)  
+* Function manipulation using functionals (functions that take functions as inputs and return vectors)  
+	* map() & friends  
+    * keep() & discard()  
+    * some() & every()  
+* Function operators take functions and return (modified) functions  
+	* safely() & possibly()  
+    * partial()  
+    * compose()  
+    * negate()  
+* Cleaner code is easier to read, understand, and maintain  
+	* rounded_mean <- compose( partial(round, digits = 1), partial(mean, trim = 2, na.rm = TRUE) )  
+    * map( list(airquality, mtcars), ~ map_dbl(.x, rounded_mean) )  
+  
+Example code includes:  
+```{r}
+
+rstudioconfDF <- readRDS("#RStudioConf.RDS")
+dim(rstudioconfDF)
+rstudioconf <- as.list(as.data.frame(t(rstudioconfDF)))
+length(rstudioconf)
+length(rstudioconf[[1]])
+
+
+# Print the first element of the list to the console 
+rstudioconf[[1]]
+
+# Create a sublist of non-retweets
+non_rt <- discard(rstudioconf, "is_retweet")
+
+# Extract the favorite count element of each non_rt sublist
+fav_count <- map_dbl(non_rt, "favorite_count")
+
+# Get the median of favorite_count for non_rt
+median(fav_count)
+
+
+# Keep the RT, extract the user_id, remove the duplicate
+rt <- keep(rstudioconf, "is_retweet") %>%
+    map("user_id") %>% 
+    unique()
+
+# Remove the RT, extract the user id, remove the duplicate
+non_rt <- discard(rstudioconf, "is_retweet") %>%
+    map("user_id") %>% 
+    unique()
+
+# Determine the total number of users
+union(rt, non_rt) %>% length()
+
+# Determine the number of users who has just retweeted
+setdiff(rt, non_rt) %>% length()
+
+
+# Prefill mean() with na.rm, and round() with digits = 1
+mean_na_rm <- partial(mean, na.rm=TRUE)
+round_one <- partial(round, digits=1)
+
+# Compose a rounded_mean function
+rounded_mean <- purrr::compose(round_one, mean_na_rm)
+
+# Extract the non retweet  
+non_rt <- discard(rstudioconf, "is_retweet")
+
+# Extract "favorite_count", and pass it to rounded_mean()
+map_dbl(non_rt, "favorite_count") %>%
+    rounded_mean()
+
+
+# Combine as_vector(), compact(), and flatten()
+flatten_to_vector <- purrr::compose(as_vector, compact, flatten)
+
+# Complete the fonction
+extractor <- function(list, what = "mentions_screen_name"){
+    map(list, what) %>%
+        flatten_to_vector()
+}
+
+# Create six_most, with tail(), sort(), and table()
+six_most <- purrr::compose(tail, sort, table)
+
+# Run extractor() on rstudioconf
+extractor(rstudioconf) %>% 
+    six_most()
+
+
+# Extract the "urls_url" elements, and flatten() the result
+urls_clean <- map(rstudioconf, "urls_url") %>%
+    flatten()
+
+# Remove the NULL
+compact_urls <- compact(urls_clean)
+compact_urls <- discard(urls_clean, is.na)  # Due to creation of the list above, NULL became NA
+
+library(stringr)
+
+# Create a mapper that detects the patten "github"
+has_github <- as_mapper(~ str_detect(.x, "github"))
+
+# Look for the "github" pattern, and sum the result
+map_lgl( compact_urls, has_github ) %>%
+    sum()
+
+
+# Complete the function
+ratio_pattern <- function(vec, pattern){
+    n_pattern <- str_detect(vec, pattern) %>% sum()
+    n_pattern / length(vec)
+}
+
+# Create flatten_and_compact()
+extraDiscard <- function(x) { discard(x, is.na) }  # address same NA issue as above
+flatten_and_compact <- purrr::compose(compact, extraDiscard, flatten)
+
+# Complete the pipe to get the ratio of URLs with "github"
+map(rstudioconf, "urls_url") %>%
+    flatten_and_compact() %>% 
+    ratio_pattern("github")
+
+
+# Create mean_above, a mapper that tests if .x is over 3.3
+mean_above <- as_mapper(~ .x > 3.3)
+
+# Prefil map_at() with "retweet_count", mean_above for above, 
+# and mean_above negation for below
+above <- partial(map_at, .at = "retweet_count", .f = mean_above )
+below <- partial(map_at, .at = "retweet_count", .f = negate(mean_above) )
+
+# Map above() and below() on non_rt, keep the "retweet_count"
+# ab <- map(non_rt, above) %>% keep("retweet_count")
+# bl <- map(non_rt, below) %>% keep("retweet_count")
+
+# Compare the size of both elements
+# length(ab)
+# length(bl)
+
+
+# Get the max() of "retweet_count" 
+max_rt <- map_dbl(non_rt, "retweet_count") %>% 
+    max()
+
+# Prefill map_at() with a mapper testing if .x equal max_rt
+# max_rt_calc <- partial(map_at, .at = "retweet_count", .f = ~.x==max_rt )
+
+# Map max_rt_calc on non_rt, keep the retweet_count & flatten
+# res <- map(non_rt, max_rt_calc) %>% 
+#     keep("retweet_count") %>% 
+#     flatten()
+
+# Print the "screen_name" and "text" of the result
+# res$screen_name
+# res$text
+
+```
+  
+ 

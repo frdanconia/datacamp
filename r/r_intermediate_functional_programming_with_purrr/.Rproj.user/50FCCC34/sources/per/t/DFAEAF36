@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1583614664259.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1694450738",
+    "id" : "DFAEAF36",
+    "lastKnownWriteTime" : 1583614882,
+    "last_content_update" : 1583614882573,
+    "path" : "C:/Users/frdanconia/Desktop/r_intermediate_functional_programming_with_purrr/r_intermediate_functional_programming_with_purrr.Rmd",
+    "project_path" : "r_intermediate_functional_programming_with_purrr.Rmd",
+    "properties" : {
+        "cursorPosition" : "708,12",
+        "scrollLine" : "693"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

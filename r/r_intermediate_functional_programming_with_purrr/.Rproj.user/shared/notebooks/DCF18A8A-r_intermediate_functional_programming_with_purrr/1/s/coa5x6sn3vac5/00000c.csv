@@ -1,0 +1,5 @@
+"0","# unnest() df2 to have a tidy dataframe"
+"0","df2 %>%"
+"0","    tidyr::unnest()"
+"2","`cols` is now required.
+Please use `cols = c(links)`"
