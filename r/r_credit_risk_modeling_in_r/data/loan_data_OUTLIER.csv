@@ -1,0 +1,2 @@
+loan_status,loan_amnt,int_rate,grade,emp_length,home_ownership,annual_inc,age
+0,5000,12.73,C,12,MORTGAGE,6.00E+06,144
