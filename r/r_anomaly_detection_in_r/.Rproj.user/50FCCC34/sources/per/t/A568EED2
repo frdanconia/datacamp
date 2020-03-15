@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1583425571761.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "370208877",
+    "id" : "A568EED2",
+    "lastKnownWriteTime" : 1583424982,
+    "last_content_update" : 1583424982,
+    "path" : "C:/Users/frdanconia/Desktop/r_anomaly_detection_in_r/Anomaly_Detection_multivariate.R",
+    "project_path" : "Anomaly_Detection_multivariate.R",
+    "properties" : {
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 5,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

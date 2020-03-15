@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1583425647222.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1361027810",
+    "id" : "BF7FDE54",
+    "lastKnownWriteTime" : 1583424964,
+    "last_content_update" : 1583424964,
+    "path" : "C:/Users/frdanconia/Desktop/r_anomaly_detection_in_r/fraud_detection.r",
+    "project_path" : "fraud_detection.r",
+    "properties" : {
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 12,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

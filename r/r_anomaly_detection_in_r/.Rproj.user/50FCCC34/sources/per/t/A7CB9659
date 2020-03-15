@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1583425525158.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "176569604",
+    "id" : "A7CB9659",
+    "lastKnownWriteTime" : 1583424989,
+    "last_content_update" : 1583424989,
+    "path" : "C:/Users/frdanconia/Desktop/r_anomaly_detection_in_r/abs-visual.R",
+    "project_path" : "abs-visual.R",
+    "properties" : {
+        "cursorPosition" : "145,0",
+        "scrollLine" : "130"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

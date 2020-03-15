@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1583425628166.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1554964948",
+    "id" : "278A6AA0",
+    "lastKnownWriteTime" : 1583424989,
+    "last_content_update" : 1583424989,
+    "path" : "C:/Users/frdanconia/Desktop/r_anomaly_detection_in_r/cbar.R",
+    "project_path" : "cbar.R",
+    "properties" : {
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 9,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

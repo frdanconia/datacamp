@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1583425587454.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2927928552",
+    "id" : "B784F62D",
+    "lastKnownWriteTime" : 1583424982,
+    "last_content_update" : 1583424982,
+    "path" : "C:/Users/frdanconia/Desktop/r_anomaly_detection_in_r/Anomaly_Detection_univariate.R",
+    "project_path" : "Anomaly_Detection_univariate.R",
+    "properties" : {
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 6,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1583425654013.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1096696662",
+    "id" : "CEB17E68",
+    "lastKnownWriteTime" : 1583424989,
+    "last_content_update" : 1583424989,
+    "path" : "C:/Users/frdanconia/Desktop/r_anomaly_detection_in_r/inference.R",
+    "project_path" : "inference.R",
+    "properties" : {
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 13,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

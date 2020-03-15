@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1583425670397.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2619892537",
+    "id" : "596E4F57",
+    "lastKnownWriteTime" : 1583424948,
+    "last_content_update" : 1583424948,
+    "path" : "C:/Users/frdanconia/Desktop/r_anomaly_detection_in_r/linearRegression.r",
+    "project_path" : "linearRegression.r",
+    "properties" : {
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 15,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

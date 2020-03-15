@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1583425663232.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "609356795",
+    "id" : "C5DF5CF7",
+    "lastKnownWriteTime" : 1583424948,
+    "last_content_update" : 1583424948,
+    "path" : "C:/Users/frdanconia/Desktop/r_anomaly_detection_in_r/linearRegressionTestData.R",
+    "project_path" : "linearRegressionTestData.R",
+    "properties" : {
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 14,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

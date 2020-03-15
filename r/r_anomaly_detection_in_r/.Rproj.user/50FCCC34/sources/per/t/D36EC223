@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1583425644431.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1125305569",
+    "id" : "D36EC223",
+    "lastKnownWriteTime" : 1583424982,
+    "last_content_update" : 1583424982,
+    "path" : "C:/Users/frdanconia/Desktop/r_anomaly_detection_in_r/Finding_Correlation_multiple_ts.R",
+    "project_path" : "Finding_Correlation_multiple_ts.R",
+    "properties" : {
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 11,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

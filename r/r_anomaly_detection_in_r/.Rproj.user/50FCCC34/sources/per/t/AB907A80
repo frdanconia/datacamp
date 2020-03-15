@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1583425674464.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1610353502",
+    "id" : "AB907A80",
+    "lastKnownWriteTime" : 1583424921,
+    "last_content_update" : 1583424921,
+    "path" : "C:/Users/frdanconia/Desktop/r_anomaly_detection_in_r/main.r",
+    "project_path" : "main.r",
+    "properties" : {
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 16,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
